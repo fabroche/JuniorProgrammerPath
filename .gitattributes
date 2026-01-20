@@ -1,0 +1,36 @@
+# Unity YAML files - always use LF
+*.unity text eol=lf
+*.prefab text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.anim text eol=lf
+*.controller text eol=lf
+*.physicMaterial text eol=lf
+*.physicsMaterial2D text eol=lf
+*.playable text eol=lf
+*.sceneTemplate text eol=lf
+
+# Unity text-based files
+*.meta text eol=lf
+*.lighting text eol=lf
+*.giparams text eol=lf
+
+# Code files
+*.cs text eol=lf
+*.cginc text eol=lf
+*.shader text eol=lf
+*.hlsl text eol=lf
+*.glslinc text eol=lf
+
+# Configuration files
+*.txt text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Unity binary files (no conversion)
+*.unitypackage binary
+*.cubemap binary
+*.flare binary
+*.unityproj binary

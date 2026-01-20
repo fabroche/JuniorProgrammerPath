@@ -1,0 +1,45 @@
+{
+  "name": "@genzai_cloud/agent-game-jam-advisor",
+  "version": "2.0.0",
+  "description": "Agente multi-modo que transforma equipos Junior con ideas ambiciosas en equipos que entregan juegos completos en 48 horas",
+  "main": "README.md",
+  "keywords": [
+    "ai-agent",
+    "game-jam",
+    "unity",
+    "unity6",
+    "game-development",
+    "project-management",
+    "claude",
+    "genzai-agents",
+    "scope-management",
+    "coordination",
+    "blender",
+    "mixamo",
+    "animator",
+    "programmer",
+    "game-designer",
+    "3d-modeling"
+  ],
+  "files": [
+    "README.md",
+    "prompt-principal.md",
+    "modos/*.md",
+    "fases/*.md",
+    "docs/**/*.md"
+  ],
+  "author": "genzai_cloud",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/fabroche/genzai-agents.git",
+    "directory": "gameJamAdvisor"
+  },
+  "homepage": "https://github.com/fabroche/genzai-agents/tree/main/gameJamAdvisor",
+  "bugs": {
+    "url": "https://github.com/fabroche/genzai-agents/issues"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
