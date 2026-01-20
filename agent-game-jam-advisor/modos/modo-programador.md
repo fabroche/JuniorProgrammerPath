@@ -45,7 +45,7 @@ Como Programador en una game jam, eres el **integrador técnico** del equipo. Tu
 ### 1. Fase de Setup (Día 1 - Primera hora)
 
 - Crear proyecto Unity 6
-- Configurar repositorio Git con .gitignore apropiado
+- Configurar repositorio Git con .gitignore Y .gitattributes (CRÍTICO)
 - Instalar paquetes esenciales (Cinemachine, TextMesh Pro, Input System)
 - Crear estructura de carpetas del proyecto
 - Configurar escenas base (MainMenu, GameScene)
@@ -301,6 +301,102 @@ public class Health : MonoBehaviour
 .DS_Store
 Thumbs.db
 ```
+
+### .gitattributes (CRÍTICO)
+
+**IMPORTANTE**: `.gitattributes` es IGUAL de importante que `.gitignore` para proyectos Unity. Sin este archivo, tendrás problemas de finales de línea entre Windows/Mac/Linux.
+
+#### ¿Por qué es necesario?
+
+Unity genera archivos (`.unity`, `.prefab`, `.asset`, etc.) con finales de línea LF (estilo Unix), pero en Windows Git usa CRLF. Esto causa:
+- ❌ Advertencias constantes: "LF will be replaced by CRLF"
+- ❌ Diffs falsos (cientos de "cambios" que son solo formato)
+- ❌ Conflictos en equipos multi-plataforma
+- ❌ Code reviews imposibles
+
+#### Contenido del .gitattributes
+
+Crear este archivo **en la raíz del proyecto** desde el inicio:
+
+```gitattributes
+# Unity YAML files - always use LF
+*.unity text eol=lf
+*.prefab text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.anim text eol=lf
+*.controller text eol=lf
+*.physicMaterial text eol=lf
+*.physicsMaterial2D text eol=lf
+*.playable text eol=lf
+*.sceneTemplate text eol=lf
+
+# Unity text-based files
+*.meta text eol=lf
+*.lighting text eol=lf
+*.giparams text eol=lf
+
+# Code files
+*.cs text eol=lf
+*.cginc text eol=lf
+*.shader text eol=lf
+*.hlsl text eol=lf
+*.glslinc text eol=lf
+
+# Configuration files
+*.txt text eol=lf
+*.json text eol=lf
+*.xml text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# Unity binary files (no conversion)
+*.unitypackage binary
+*.cubemap binary
+*.flare binary
+*.unityproj binary
+```
+
+#### Setup Inicial (Proyecto Nuevo)
+
+```bash
+# 1. Crear .gitignore y .gitattributes PRIMERO
+# 2. Luego hacer el primer commit
+git init
+git add .gitignore .gitattributes
+git add .
+git commit -m "Initial commit with Git configuration"
+```
+
+#### Setup en Proyecto Existente (Si ya tienes commits)
+
+```bash
+# 1. Crear .gitattributes
+# 2. Normalizar todos los archivos
+git rm --cached -r .
+git add .
+git commit -m "Configure .gitattributes for Unity project line endings"
+```
+
+#### Verificar que Funciona
+
+```bash
+# Verificar configuración de un archivo Unity
+git check-attr -a "Assets/Scenes/MainMenu.unity"
+
+# Deberías ver:
+# Assets/Scenes/MainMenu.unity: text: set
+# Assets/Scenes/MainMenu.unity: eol: lf
+```
+
+#### Resultado Esperado
+
+✅ No más advertencias "LF will be replaced by CRLF"
+✅ Diffs limpios (solo cambios reales)
+✅ Compatibilidad entre Windows/Mac/Linux
+✅ Code reviews legibles
+
+**REGLA DE ORO**: `.gitattributes` se crea **ANTES** del primer commit, junto con `.gitignore`.
 
 ### Comandos Git Básicos
 
