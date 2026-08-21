@@ -682,6 +682,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   player: {fileID: 1271530608}
   cameraOffset: {x: 0, y: 5, z: -7}
+  cameraOffsetMoving: {x: 0, y: 5, z: -7}
+  followStrength: 3
 --- !u!4 &589579597 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8780424320546655305, guid: 71782582b9d2cac4cba5251a3b767d13, type: 3}
@@ -780,7 +782,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7869f251c4c0381409069cc83e75f834, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 20
+  speed: 5
+  isMoving: 0
+  turnAngle: 45
+  rotationSmoothness: 5
 --- !u!54 &1271530613
 Rigidbody:
   m_ObjectHideFlags: 0
