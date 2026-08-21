@@ -6,8 +6,12 @@ using System.Collections.Generic;
 public class FollowPlayer : MonoBehaviour
 {
     public GameObject player;
-    private PlayerController playerController;
-    [SerializeField] private Vector3 cameraOffset = new Vector3(0, 5, -7);
+    private PlayerController _playerController;
+    private Transform _playerTransform;
+    [Header("Camera Settings")]
+    [SerializeField] private Vector3 cameraOffset = new Vector3(0, 6, -9);
+    [SerializeField] private float cameraPitch = 19f;
+    [SerializeField] private float rotationStrength = 3f;
     [SerializeField] private float followStrength = 5f;
     
     private float _playerSpeed;
@@ -22,10 +26,9 @@ public class FollowPlayer : MonoBehaviour
     void Start()
     {
         if (player == null) return;
-        playerController = player.GetComponent<PlayerController>();
-        _playerSpeed = playerController.speed;
+        _playerController = player.GetComponent<PlayerController>();
+        _playerTransform = player.GetComponent<Transform>();
         _percentageOfPlayerSpeed = 0.2f;
-        followStrength = _followStrengthCalculator(_playerSpeed)(_percentageOfPlayerSpeed);
     }
 
     // Update is called once per frame
@@ -37,12 +40,17 @@ public class FollowPlayer : MonoBehaviour
     {
         // transform.position = player.transform.position + cameraOffset;
         if (player == null) return;
-
+        
+        _playerSpeed = _playerController.speed;
+        followStrength = _followStrengthCalculator(_playerSpeed)(_percentageOfPlayerSpeed);
+        
         transform.position = Vector3.Lerp(
             transform.position,
-            player.transform.position + cameraOffset,
+            _playerTransform.TransformPoint(cameraOffset),
             followStrength * Time.deltaTime
         );
+        Quaternion targetRotation = Quaternion.Euler(cameraPitch, _playerTransform.eulerAngles.y, 0f);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationStrength * Time.deltaTime);
     }
 
     void FixedUpdate()
