@@ -16,6 +16,7 @@ public class FollowPlayer : MonoBehaviour
     [SerializeField] private float rotationStrength = 3f;
     [SerializeField] private float followStrength = 5f;
     [SerializeField] private float cameraFOV = 60f;
+    [SerializeField] private float cameraHighSpeedFOV = 70f;
 
     private float _playerSpeed;
     private float _percentageOfPlayerSpeed;
@@ -61,7 +62,7 @@ public class FollowPlayer : MonoBehaviour
 
         if (_playerSpeed > _playerController.GetMaximumPlayerNormalSpeed())
         {
-            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, cameraFOV + 10f, 2f * Time.deltaTime);
+            _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, cameraHighSpeedFOV, 2f * Time.deltaTime);
         }
         else _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, cameraFOV, 2f * Time.deltaTime);
     }
