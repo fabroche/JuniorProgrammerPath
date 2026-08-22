@@ -7,15 +7,15 @@ public class PlayerController : MonoBehaviour
     public float speed = 0f;
 
     [Header("Player Acceleration Settings")]
-    private float maxSpeed = 10f;
+    private float _maxSpeed = 10f;
 
-    private float nitroSpeed = 20f;
+    private float _nitroSpeed = 20f;
 
     [Header("Ritmos (unidades por segundo)")]
     private float accelerationRate = 8f;
 
     private float brakeRate = 20f;
-    private float dragRate = 2f;
+    private float dragRate = 4f;
 
     public bool isMoving = false;
     [SerializeField] private float turnAngle = 45.0f;
@@ -34,9 +34,11 @@ public class PlayerController : MonoBehaviour
         if (kb == null) return;
 
         ReadInput(kb);
+
         Accelerate();
 
         transform.Translate(Vector3.forward * (Time.deltaTime * speed));
+        
         TurnPlayer();
 
         isMoving = speed != 0f;
@@ -70,7 +72,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        float topSpeed = isNitroActive ? nitroSpeed : maxSpeed;
+        float topSpeed = isNitroActive ? _nitroSpeed : _maxSpeed;
         float targetSpeed = verticalInput * topSpeed;
         
         bool isBraking = isMoving && Mathf.Sign(verticalInput) != Mathf.Sign(speed);
@@ -82,5 +84,15 @@ public class PlayerController : MonoBehaviour
     private bool UseNitro(Keyboard kb)
     {
         return kb.shiftKey.isPressed;
+    }
+    
+    public float GetMaximumPlayerNormalSpeed()
+    {
+        return _maxSpeed;
+    }
+    
+    public float GetMaximumPlayerNitroSpeed()
+    {
+        return _nitroSpeed;
     }
 }
