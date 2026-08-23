@@ -49,7 +49,7 @@ public class FollowPlayer : MonoBehaviour
         // transform.position = player.transform.position + cameraOffset;
         if (player == null) return;
 
-        _playerSpeed = _playerController.speed;
+        _playerSpeed = _playerController.Speed;
         followStrength = _followStrengthCalculator(_playerSpeed)(_percentageOfPlayerSpeed);
 
         transform.position = Vector3.Lerp(

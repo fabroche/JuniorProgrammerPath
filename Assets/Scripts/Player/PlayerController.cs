@@ -4,20 +4,19 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-    public float speed = 0f;
 
     [Header("Player Acceleration Settings")]
+    private float speed = 0f;
     private float _maxSpeed = 10f;
-
     private float _nitroSpeed = 20f;
 
     [Header("Ritmos (unidades por segundo)")]
     private float accelerationRate = 8f;
-
     private float brakeRate = 20f;
     private float dragRate = 4f;
-
-    public bool isMoving = false;
+    
+    [Header("Player Movement Settings")] 
+    [SerializeField] private bool isMoving = false;
     [SerializeField] private float turnAngle = 45.0f;
     [SerializeField] private float rotationSmoothness = 5.0f;
 
@@ -95,4 +94,16 @@ public class PlayerController : MonoBehaviour
     {
         return _nitroSpeed;
     }
+
+    public float Speed
+    {
+        get => speed;
+    }
+    
+    public bool IsMoving
+    {
+        get => isMoving;
+    }
+    
+    
 }
