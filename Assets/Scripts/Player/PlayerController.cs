@@ -4,12 +4,17 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
+    public Transform propellers;
     [Header("Player Acceleration Settings")]
     private float _speed = 0f;
-
+    
     private float _maxSpeed = 10f;
     private float _nitroSpeed = 20f;
 
+    private float _propellersRpm = 0f;
+    private float _maxPropellerRpm = 900f;
+    private float _propellerRpmRate = 2000f;
+    
     [Header("Ritmos (unidades por segundo)")]
     private float _accelerationRate = 8f;
 
@@ -19,15 +24,22 @@ public class PlayerController : MonoBehaviour
     [Header("Player Movement Settings")] [SerializeField]
     private bool isMoving = false;
 
+    [SerializeField] private bool isAscendingOrDescending = false;
+
     [SerializeField] private float turnAngle = 45.0f;
     [SerializeField] private float rotationSmoothness = 5.0f;
 
-    private float _horizontalInput;
-    private float _smoothedInput;
 
     private float _verticalInput;
+    private float _smoothedHorizontalInput;
+    private float _horizontalInput;
+    private float _smoothedVerticalInput;
+    private float _ascendingOrDescendingInput;
+    private float _smoothedAscendingOrDescendingInput;
+    
     private bool _isNitroActive = false;
-
+    
+    
     // Update is called once per frame
     void Update()
     {
@@ -37,6 +49,7 @@ public class PlayerController : MonoBehaviour
         ReadInput(kb);
 
         Accelerate();
+        RotatePropellers();
 
         transform.Translate(Vector3.forward * (Time.deltaTime * _speed));
 
@@ -48,8 +61,8 @@ public class PlayerController : MonoBehaviour
     private void ReadInput(Keyboard kb)
     {
         _verticalInput = 0f;
-        if (kb.wKey.isPressed || kb.upArrowKey.isPressed) _verticalInput += 1f;
-        if (kb.sKey.isPressed || kb.downArrowKey.isPressed) _verticalInput -= 1f;
+        if (kb.wKey.isPressed) _verticalInput += 1f;
+        if (kb.sKey.isPressed) _verticalInput -= 1f;
 
         _horizontalInput = 0f;
         if (kb.aKey.isPressed || kb.leftArrowKey.isPressed) _horizontalInput -= 1f;
@@ -57,17 +70,30 @@ public class PlayerController : MonoBehaviour
 
         _isNitroActive = UseNitro(kb);
 
-        _smoothedInput = Mathf.Lerp(_smoothedInput, _horizontalInput, rotationSmoothness * Time.deltaTime);
+        _ascendingOrDescendingInput = 0f;
+        if (kb.upArrowKey.isPressed) _ascendingOrDescendingInput += 1f;
+        if (kb.downArrowKey.isPressed) _ascendingOrDescendingInput -= 1f;
+
+        isAscendingOrDescending = kb.upArrowKey.isPressed || kb.downArrowKey.isPressed;
+
+
+        _smoothedHorizontalInput =
+            Mathf.Lerp(_smoothedHorizontalInput, _horizontalInput, rotationSmoothness * Time.deltaTime);
+        _smoothedVerticalInput =
+            Mathf.Lerp(_smoothedVerticalInput, _verticalInput, rotationSmoothness * Time.deltaTime);
+        _smoothedAscendingOrDescendingInput =
+            Mathf.Lerp(_smoothedAscendingOrDescendingInput, _ascendingOrDescendingInput, rotationSmoothness * Time.deltaTime);
     }
 
     private void TurnPlayer()
     {
         if (gameObject.CompareTag("Plane"))
         {
-            transform.Rotate(Vector3.back, turnAngle * _smoothedInput * Time.deltaTime);
+            transform.Rotate(Vector3.back, turnAngle * _smoothedHorizontalInput * Time.deltaTime);
+            transform.Rotate(Vector3.right, turnAngle * _smoothedAscendingOrDescendingInput * Time.deltaTime);
         }
 
-        transform.Rotate(Vector3.up, turnAngle * _smoothedInput * Time.deltaTime);
+        transform.Rotate(Vector3.up, turnAngle * _smoothedHorizontalInput * Time.deltaTime);
     }
 
     private void Accelerate()
@@ -83,7 +109,7 @@ public class PlayerController : MonoBehaviour
 
         bool isBraking = isMoving && Mathf.Sign(_verticalInput) != Mathf.Sign(_speed);
         float movementRate = isBraking ? _brakeRate : _accelerationRate;
-
+        
         _speed = Mathf.MoveTowards(_speed, targetSpeed, movementRate * Time.deltaTime);
     }
 
@@ -92,6 +118,17 @@ public class PlayerController : MonoBehaviour
         return kb.shiftKey.isPressed;
     }
 
+    private void RotatePropellers()
+    {
+        if (propellers == null) return;
+        float speedRatio = Mathf.Abs(_speed) / _maxSpeed;
+        float targetRpm = _maxPropellerRpm * speedRatio;
+        
+        _propellersRpm = Mathf.MoveTowards(_propellersRpm, targetRpm, _propellerRpmRate * Time.deltaTime);
+        
+        propellers.Rotate(Vector3.forward, _propellersRpm * Time.deltaTime);
+    }
+    
     public float GetMaximumPlayerNormalSpeed()
     {
         return _maxSpeed;
@@ -111,4 +148,6 @@ public class PlayerController : MonoBehaviour
     {
         get => isMoving;
     }
+    
+    
 }
