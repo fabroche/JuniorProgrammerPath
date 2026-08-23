@@ -20,7 +20,8 @@ public class FollowPlayer : MonoBehaviour
 
     private float _playerSpeed;
     private float _percentageOfPlayerSpeed;
-
+    private Quaternion _targetRotation;
+    
     private Camera _camera;
 
     [Tooltip(
@@ -57,9 +58,15 @@ public class FollowPlayer : MonoBehaviour
             _playerTransform.TransformPoint(cameraOffset),
             followStrength * Time.deltaTime
         );
-        Quaternion targetRotation = Quaternion.Euler(cameraPitch, _playerTransform.eulerAngles.y, 0f);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationStrength * Time.deltaTime);
+        
+        TurnCamera();
 
+        UpdateCameraFieldOfView();
+        
+    }
+
+    private void UpdateCameraFieldOfView()
+    {
         if (_playerSpeed > _playerController.GetMaximumPlayerNormalSpeed())
         {
             _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, cameraHighSpeedFOV, 2f * Time.deltaTime);
@@ -67,7 +74,17 @@ public class FollowPlayer : MonoBehaviour
         else _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, cameraFOV, 2f * Time.deltaTime);
     }
 
-    void FixedUpdate()
+    void TurnCamera()
     {
+        if (player.CompareTag("Plane")){
+            
+            _targetRotation = _playerTransform.rotation * Quaternion.Euler(cameraPitch, 0f, 0f);
+        }
+        else
+        {
+            _targetRotation = Quaternion.Euler(cameraPitch, _playerTransform.eulerAngles.y, 0f);
+        }
+
+        transform.rotation = Quaternion.Slerp(transform.rotation, _targetRotation, rotationStrength * Time.deltaTime);
     }
 }

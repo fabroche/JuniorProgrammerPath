@@ -4,19 +4,21 @@ using UnityEngine.InputSystem;
 
 public class PlayerController : MonoBehaviour
 {
-
     [Header("Player Acceleration Settings")]
     private float _speed = 0f;
+
     private float _maxSpeed = 10f;
     private float _nitroSpeed = 20f;
 
     [Header("Ritmos (unidades por segundo)")]
     private float _accelerationRate = 8f;
+
     private float _brakeRate = 20f;
     private float _dragRate = 4f;
-    
-    [Header("Player Movement Settings")] 
-    [SerializeField] private bool isMoving = false;
+
+    [Header("Player Movement Settings")] [SerializeField]
+    private bool isMoving = false;
+
     [SerializeField] private float turnAngle = 45.0f;
     [SerializeField] private float rotationSmoothness = 5.0f;
 
@@ -37,7 +39,7 @@ public class PlayerController : MonoBehaviour
         Accelerate();
 
         transform.Translate(Vector3.forward * (Time.deltaTime * _speed));
-        
+
         TurnPlayer();
 
         isMoving = _speed != 0f;
@@ -60,6 +62,11 @@ public class PlayerController : MonoBehaviour
 
     private void TurnPlayer()
     {
+        if (gameObject.CompareTag("Plane"))
+        {
+            transform.Rotate(Vector3.back, turnAngle * _smoothedInput * Time.deltaTime);
+        }
+
         transform.Rotate(Vector3.up, turnAngle * _smoothedInput * Time.deltaTime);
     }
 
@@ -73,10 +80,10 @@ public class PlayerController : MonoBehaviour
 
         float topSpeed = _isNitroActive ? _nitroSpeed : _maxSpeed;
         float targetSpeed = _verticalInput * topSpeed;
-        
+
         bool isBraking = isMoving && Mathf.Sign(_verticalInput) != Mathf.Sign(_speed);
         float movementRate = isBraking ? _brakeRate : _accelerationRate;
-        
+
         _speed = Mathf.MoveTowards(_speed, targetSpeed, movementRate * Time.deltaTime);
     }
 
@@ -84,12 +91,12 @@ public class PlayerController : MonoBehaviour
     {
         return kb.shiftKey.isPressed;
     }
-    
+
     public float GetMaximumPlayerNormalSpeed()
     {
         return _maxSpeed;
     }
-    
+
     public float GetMaximumPlayerNitroSpeed()
     {
         return _nitroSpeed;
@@ -99,11 +106,9 @@ public class PlayerController : MonoBehaviour
     {
         get => _speed;
     }
-    
+
     public bool IsMoving
     {
         get => isMoving;
     }
-    
-    
 }
