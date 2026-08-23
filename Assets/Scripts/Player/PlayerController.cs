@@ -10,10 +10,16 @@ public class PlayerController : MonoBehaviour
     
     private float _maxSpeed = 10f;
     private float _nitroSpeed = 20f;
-
+    
+    [Header("Propellers Settings")]
     private float _propellersRpm = 0f;
     private float _maxPropellerRpm = 900f;
     private float _propellerRpmRate = 2000f;
+    
+    [Header("Bank Settings")]
+    [SerializeField] private float _bankAngle = 0f;
+    private float _maxBankAngle = 45f;
+    private float _bankRotationRate = 90f;
     
     [Header("Ritmos (unidades por segundo)")]
     private float _accelerationRate = 8f;
@@ -89,7 +95,12 @@ public class PlayerController : MonoBehaviour
     {
         if (gameObject.CompareTag("Plane"))
         {
-            transform.Rotate(Vector3.back, turnAngle * _smoothedHorizontalInput * Time.deltaTime);
+            float previousBankAngle = _bankAngle;
+            
+            float targetBankAngle = _horizontalInput * _maxBankAngle;
+            _bankAngle = Mathf.MoveTowards(_bankAngle, targetBankAngle, _bankRotationRate * Time.deltaTime);
+            
+            transform.Rotate(Vector3.back, _bankAngle - previousBankAngle);
             transform.Rotate(Vector3.right, turnAngle * _smoothedAscendingOrDescendingInput * Time.deltaTime);
         }
 

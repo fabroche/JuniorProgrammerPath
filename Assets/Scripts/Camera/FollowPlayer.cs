@@ -13,6 +13,7 @@ public class FollowPlayer : MonoBehaviour
     private Vector3 cameraOffset = new Vector3(0, 6, -9);
 
     [SerializeField] private float cameraPitch = 19f;
+    [SerializeField, Range(0f, 1f)] private float cameraRollInfuence = 0.35f;
     [SerializeField] private float rotationStrength = 3f;
     [SerializeField] private float followStrength = 5f;
     [SerializeField] private float cameraFOV = 60f;
@@ -53,13 +54,16 @@ public class FollowPlayer : MonoBehaviour
         _playerSpeed = _playerController.Speed;
         followStrength = _followStrengthCalculator(_playerSpeed)(_percentageOfPlayerSpeed);
 
+        Vector3 blendedUp = Vector3.Lerp(Vector3.up, _playerTransform.up, cameraRollInfuence);
+        Quaternion frame = Quaternion.LookRotation(_playerTransform.forward, blendedUp);
+        
         transform.position = Vector3.Lerp(
             transform.position,
-            _playerTransform.TransformPoint(cameraOffset),
+            _playerTransform.position + frame * cameraOffset,
             followStrength * Time.deltaTime
         );
         
-        TurnCamera();
+        TurnCamera(frame);
 
         UpdateCameraFieldOfView();
         
@@ -74,11 +78,11 @@ public class FollowPlayer : MonoBehaviour
         else _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, cameraFOV, 2f * Time.deltaTime);
     }
 
-    void TurnCamera()
+    void TurnCamera(Quaternion rotationFrame)
     {
         if (player.CompareTag("Plane")){
             
-            _targetRotation = _playerTransform.rotation * Quaternion.Euler(cameraPitch, 0f, 0f);
+            _targetRotation = rotationFrame * Quaternion.Euler(cameraPitch, 0f, 0f);
         }
         else
         {
