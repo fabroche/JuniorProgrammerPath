@@ -2,11 +2,12 @@ using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using Controllers;
 
 public class FollowPlayer : MonoBehaviour
 {
     public GameObject player;
-    private PlayerController _playerController;
+    private PlaneWithPropellerController _playerController;
     private Transform _playerTransform;
 
     [Header("Camera Settings")] [SerializeField]
@@ -35,7 +36,7 @@ public class FollowPlayer : MonoBehaviour
     void Start()
     {
         if (player == null) return;
-        _playerController = player.GetComponent<PlayerController>();
+        _playerController = player.GetComponent<PlaneWithPropellerController>();
         _playerTransform = player.GetComponent<Transform>();
         _percentageOfPlayerSpeed = 0.2f;
         _camera = GetComponent<Camera>();
@@ -71,7 +72,7 @@ public class FollowPlayer : MonoBehaviour
 
     private void UpdateCameraFieldOfView()
     {
-        if (_playerSpeed > _playerController.GetMaximumPlayerNormalSpeed())
+        if (_playerSpeed > _playerController.MaxSpeed)
         {
             _camera.fieldOfView = Mathf.Lerp(_camera.fieldOfView, cameraHighSpeedFOV, 2f * Time.deltaTime);
         }

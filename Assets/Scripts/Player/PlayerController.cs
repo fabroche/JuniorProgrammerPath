@@ -126,6 +126,8 @@ public class PlayerController : MonoBehaviour
 
     private bool UseNitro(Keyboard kb)
     {
+        var boostKey = kb.shiftKey;
+        
         return kb.shiftKey.isPressed;
     }
 
