@@ -1029,7 +1029,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 825415029}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7869f251c4c0381409069cc83e75f834, type: 3}
   m_Name: 
@@ -1040,6 +1040,30 @@ MonoBehaviour:
   isAscendingOrDescending: 0
   turnAngle: 45
   rotationSmoothness: 5
+--- !u!114 &825415032
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 825415029}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b0c5d5131a34f46ae10ce0302d0f1d1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _propellers:
+    _propellersTransforms:
+    - {fileID: 966734127}
+    _maxPropellerRpm: 900
+    _propellerRpmRate: 2000
+  moveForwardButton: 37
+  moveBackwardButton: 33
+  moveRightButton: 18
+  moveLeftButton: 15
+  moveUpButton: 63
+  moveDownButton: 64
+  boostSpeedButton: 51
 --- !u!1 &899755176
 GameObject:
   m_ObjectHideFlags: 0
@@ -1404,6 +1428,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 100002, guid: af29f0ea7e5403641b3b244ede69c374, type: 3}
       insertIndex: -1
       addedObject: {fileID: 825415031}
+    - targetCorrespondingSourceObject: {fileID: 100002, guid: af29f0ea7e5403641b3b244ede69c374, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 825415032}
   m_SourcePrefab: {fileID: 100100000, guid: af29f0ea7e5403641b3b244ede69c374, type: 3}
 --- !u!1 &1295456286
 GameObject:
