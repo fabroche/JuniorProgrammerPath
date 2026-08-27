@@ -6,21 +6,25 @@ namespace Controllers
 {
     public abstract class TransportController : MonoBehaviour
     {
-        // Speed Settings
+        [Header("Speed Settings")]
+        [SerializeField] protected float maxSpeed = 10f;
+        [SerializeField] private float maxBoostSpeed = 20f;
+
+        // Speed State
         protected float _speed = 0f;
-        protected float _maxSpeed = 10f;
-        protected float _maxBoostSpeed = 20f;
         protected bool _isBoostSpeedActive = false;
         
-        // Acceleration Settings
-        protected float _accelerationRate = 8f;
-        protected float _brakeRate = 20f;
-        protected float _dragRate = 4f;
+        [Header("Acceleration Settings")]
+        [SerializeField] private float accelerationRate = 8f;
+        [SerializeField] private float brakeRate = 20f;
+        [SerializeField] private float dragRate = 4f;
+
+        // Movement State
         protected bool _isMoving = false;
         
-        // Rotation Settings
-        protected float _turnAngle = 45f;
-        protected float _rotationSmoothness = 5f;
+        [Header("Rotation Settings")]
+        [SerializeField] protected float turnAngle = 45f;
+        [SerializeField] protected float rotationSmoothness = 5f;
 
         // Input Settings
         protected float _verticalInput;
@@ -44,7 +48,7 @@ namespace Controllers
         
         public float MaxSpeed
         {
-            get => _maxSpeed;
+            get => maxSpeed;
         }
 
         public bool IsMoving
@@ -88,15 +92,15 @@ namespace Controllers
         {
             if (_verticalInput == 0f)
             {
-                _speed = Mathf.MoveTowards(_speed, 0f, _dragRate * Time.deltaTime);
+                _speed = Mathf.MoveTowards(_speed, 0f, dragRate * Time.deltaTime);
                 return;
             }
 
-            float topSpeed = _isBoostSpeedActive ? _maxBoostSpeed : _maxSpeed;
+            float topSpeed = _isBoostSpeedActive ? maxBoostSpeed : maxSpeed;
             float targetSpeed = _verticalInput * topSpeed;
 
             bool isBraking = _isMoving && Mathf.Sign(_verticalInput) != Mathf.Sign(_speed);
-            float movementRate = isBraking ? _brakeRate : _accelerationRate;
+            float movementRate = isBraking ? brakeRate : accelerationRate;
         
             _speed = Mathf.MoveTowards(_speed, targetSpeed, movementRate * Time.deltaTime);
         }
@@ -113,7 +117,7 @@ namespace Controllers
             if (moveBackwardInputKey.isPressed) _verticalInput -= 1f;
             
             _smoothedVerticalInput =
-                Mathf.Lerp(_smoothedVerticalInput, _verticalInput, _rotationSmoothness * Time.deltaTime);
+                Mathf.Lerp(_smoothedVerticalInput, _verticalInput, rotationSmoothness * Time.deltaTime);
         }
         
         protected virtual void ReadXAxisInput(ButtonControl moveRightInputKey, ButtonControl moveLeftInputKey)
@@ -123,7 +127,7 @@ namespace Controllers
             if (moveLeftInputKey.isPressed) _horizontalInput -= 1f;
             
             _smoothedHorizontalInput =
-                Mathf.Lerp(_smoothedHorizontalInput, _horizontalInput, _rotationSmoothness * Time.deltaTime);
+                Mathf.Lerp(_smoothedHorizontalInput, _horizontalInput, rotationSmoothness * Time.deltaTime);
         }
     }
 }

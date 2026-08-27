@@ -677,12 +677,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 534669902}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a27e6af5159c2b46b31814d35ae3431, type: 3}
+  m_Script: {fileID: 11500000, guid: ba8c5ac0400b4ea281e4891a64c29f38, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  player: {fileID: 1271530608}
-  cameraOffset: {x: 0, y: 5, z: -7}
-  followStrength: 3
+  targetController: {fileID: 1271530614}
+  localCameraOffset: {x: 0, y: 6, z: -9}
+  cameraPitchAngle: 19
+  followLagRatio: 0.2
+  rotationFollowStrength: 3
+  defaultFieldOfView: 60
+  highSpeedFieldOfView: 70
 --- !u!4 &589579597 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 8780424320546655305, guid: 71782582b9d2cac4cba5251a3b767d13, type: 3}
@@ -769,22 +773,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 178130, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
   m_PrefabInstance: {fileID: 1950247676}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1271530609
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1271530608}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7869f251c4c0381409069cc83e75f834, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  speed: 0
-  isMoving: 0
-  turnAngle: 45
-  rotationSmoothness: 5
 --- !u!54 &1271530613
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -812,6 +800,41 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &1271530614
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1271530608}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 28adb89a750219845937d082e6ef3f30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxSpeed: 10
+  maxBoostSpeed: 20
+  accelerationRate: 8
+  brakeRate: 20
+  dragRate: 4
+  turnAngle: 45
+  rotationSmoothness: 5
+  moveForwardButton: 37
+  moveBackwardButton: 33
+  moveRightButton: 18
+  moveLeftButton: 15
+  boostSpeedButton: 51
+  _wheels:
+    _frontWheelsTransforms:
+    - {fileID: 1950247680}
+    - {fileID: 1950247679}
+    _rearWheelsTransforms:
+    - {fileID: 1950247678}
+    - {fileID: 1950247677}
+    _maxWheelRpm: 600
+    _wheelRpmRate: 1200
+    _maxSteeringAngle: 30
+    _steeringRate: 120
 --- !u!1001 &1300365318
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1023,11 +1046,31 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 178130, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1271530609}
+      addedObject: {fileID: 1271530613}
     - targetCorrespondingSourceObject: {fileID: 178130, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1271530613}
+      addedObject: {fileID: 1271530614}
   m_SourcePrefab: {fileID: 100100000, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
+--- !u!4 &1950247677 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 431296, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
+  m_PrefabInstance: {fileID: 1950247676}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1950247678 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 400764, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
+  m_PrefabInstance: {fileID: 1950247676}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1950247679 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 455660, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
+  m_PrefabInstance: {fileID: 1950247676}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &1950247680 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 446132, guid: 70bf34f6c25c948458f254e87188b00b, type: 3}
+  m_PrefabInstance: {fileID: 1950247676}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &2093379048 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7317731328111405690, guid: 5f0963a629b97442587b7f3ece766e42, type: 3}

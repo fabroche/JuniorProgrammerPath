@@ -37,7 +37,7 @@ namespace Controllers
             if (moveDownInputKey.isPressed) _ascendingOrDescendingInput -= 1f;
             
             _smoothedAscendingOrDescendingInput =
-                Mathf.Lerp(_smoothedAscendingOrDescendingInput, _ascendingOrDescendingInput, _rotationSmoothness * Time.deltaTime);
+                Mathf.Lerp(_smoothedAscendingOrDescendingInput, _ascendingOrDescendingInput, rotationSmoothness * Time.deltaTime);
         } 
         
         protected override void Turn()
@@ -48,15 +48,15 @@ namespace Controllers
             _bankAngle = Mathf.MoveTowards(_bankAngle, targetBankAngle, _bankRotationRate * Time.deltaTime);
 
             transform.Rotate(Vector3.back, _bankAngle - previousBankAngle);
-            transform.Rotate(Vector3.right, _turnAngle * _smoothedAscendingOrDescendingInput * Time.deltaTime);
+            transform.Rotate(Vector3.right, turnAngle * _smoothedAscendingOrDescendingInput * Time.deltaTime);
 
 
-            transform.Rotate(Vector3.up, _turnAngle * _smoothedHorizontalInput * Time.deltaTime);
+            transform.Rotate(Vector3.up, turnAngle * _smoothedHorizontalInput * Time.deltaTime);
         }
 
         public void RotatePropellers()
         {
-            _propellers.Rotate(_speed, _maxSpeed);
+            _propellers.Rotate(_speed, maxSpeed);
         }
 
         protected override void ReadInput(Keyboard kb)
