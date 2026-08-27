@@ -28,6 +28,14 @@ namespace Controllers
         protected float _smoothedVerticalInput;
         protected float _smoothedHorizontalInput;
 
+        // Buttons Settings
+        [Header("Input Bindings")]
+        [SerializeField] private Key moveForwardButton;
+        [SerializeField] private Key moveBackwardButton;
+        [SerializeField] private Key moveRightButton;
+        [SerializeField] private Key moveLeftButton;
+        [SerializeField] private Key boostSpeedButton;
+
         // Getters
         public float Speed
         {
@@ -47,6 +55,35 @@ namespace Controllers
         // Setters
         
         
+        protected virtual void Update()
+        {
+            Keyboard kb = Keyboard.current;
+            if (kb == null) return;
+
+            ReadInput(kb);
+
+            Accelerate();
+            Turn();
+            Move();
+
+            _isMoving = _speed != 0f;
+        }
+
+        protected virtual void ReadInput(Keyboard kb)
+        {
+            ReadBoostSpeedInput(kb[boostSpeedButton]);
+            ReadZAxisInput(kb[moveForwardButton], kb[moveBackwardButton]);
+            ReadXAxisInput(kb[moveRightButton], kb[moveLeftButton]);
+        }
+
+        // Cada transporte gira a su manera
+        protected abstract void Turn();
+
+        protected virtual void Move()
+        {
+            transform.Translate(Vector3.forward * (Time.deltaTime * _speed));
+        }
+
         protected virtual void Accelerate()
         {
             if (_verticalInput == 0f)

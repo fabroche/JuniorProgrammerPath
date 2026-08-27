@@ -6,7 +6,6 @@ using UnityEngine.InputSystem.Controls;
 
 namespace Controllers
 {
-    [Serializable]
     public class PlaneWithPropellerController : TransportController, IPropellers
     {
         private bool _isFlying = false;
@@ -27,16 +26,11 @@ namespace Controllers
         [SerializeField] private PropellerSystem _propellers;
 
         // Buttons Settings
-        [Header("Input Bindings")]
-        [SerializeField] private Key moveForwardButton;
-        [SerializeField] private Key moveBackwardButton;
-        [SerializeField] private Key moveRightButton;
-        [SerializeField] private Key moveLeftButton;
+        [Header("Plane Input Bindings")]
         [SerializeField] private Key moveUpButton;
         [SerializeField] private Key moveDownButton;
-        [SerializeField] private Key boostSpeedButton;
         
-        protected virtual void ReadYAxisInput(ButtonControl moveUpInputKey, ButtonControl moveDownInputKey)
+        private void ReadYAxisInput(ButtonControl moveUpInputKey, ButtonControl moveDownInputKey)
         {
             _ascendingOrDescendingInput = 0f;
             if (moveUpInputKey.isPressed) _ascendingOrDescendingInput += 1f;
@@ -46,7 +40,7 @@ namespace Controllers
                 Mathf.Lerp(_smoothedAscendingOrDescendingInput, _ascendingOrDescendingInput, _rotationSmoothness * Time.deltaTime);
         } 
         
-        private void TurnPlane()
+        protected override void Turn()
         {
             float previousBankAngle = _bankAngle;
 
@@ -65,23 +59,16 @@ namespace Controllers
             _propellers.Rotate(_speed, _maxSpeed);
         }
 
-        private void Update()
+        protected override void ReadInput(Keyboard kb)
         {
-            var kb = Keyboard.current;
-            if (kb == null) return;
-            
-            ReadBoostSpeedInput(kb[boostSpeedButton]);
-            ReadZAxisInput(kb[moveForwardButton], kb[moveBackwardButton]);
-            ReadXAxisInput(kb[moveRightButton], kb[moveLeftButton]);
+            base.ReadInput(kb);
             ReadYAxisInput(kb[moveUpButton], kb[moveDownButton]);
-            
-            Accelerate();
-            TurnPlane();
+        }
+
+        protected override void Update()
+        {
+            base.Update();
             RotatePropellers();
-            
-            transform.Translate(Vector3.forward * (Time.deltaTime * _speed));
-            
-            _isMoving = _speed != 0f;
         }
     }
 }

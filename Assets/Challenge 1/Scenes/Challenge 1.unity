@@ -534,7 +534,7 @@ GameObject:
   - component: {fileID: 534669904}
   - component: {fileID: 534669903}
   - component: {fileID: 534669907}
-  - component: {fileID: 534669906}
+  - component: {fileID: 534669908}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -616,26 +616,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &534669906
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 534669902}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 9a27e6af5159c2b46b31814d35ae3431, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  player: {fileID: 825415029}
-  cameraOffset: {x: 0, y: 5, z: -15}
-  cameraPitch: 10
-  cameraRollInfuence: 0.35
-  rotationStrength: 3
-  followStrength: 5
-  cameraFOV: 60
-  cameraHighSpeedFOV: 70
 --- !u!114 &534669907
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -680,6 +660,26 @@ MonoBehaviour:
     m_MipBias: 0
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
+--- !u!114 &534669908
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 534669902}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c59471483ca644319fa9fadc955fc63e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetController: {fileID: 825415032}
+  localCameraOffset: {x: 0, y: 7, z: -15}
+  cameraPitchAngle: 11
+  followLagRatio: 0.2
+  rotationFollowStrength: 3
+  defaultFieldOfView: 60
+  highSpeedFieldOfView: 70
+  bankInfluence: 0.35
 --- !u!1 &673814960
 GameObject:
   m_ObjectHideFlags: 0
