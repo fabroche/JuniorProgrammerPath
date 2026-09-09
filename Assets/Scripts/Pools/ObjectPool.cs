@@ -10,7 +10,8 @@ namespace Pools
 
         private Stack<PooledObject> _pool;
 
-        private void Start()
+        // virtual para que un spawner pueda extenderlo: el override tiene que llamar a base.Start()
+        protected virtual void Start()
         {
             SetupPool();
         }
