@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace Controllers
 {
-    public class CarWithWheelsController : TransportController, IWheels
+    // La fisica de un carro con ruedas. No sabe de donde viene el input.
+    public abstract class CarWithWheelsController : TransportController, IWheels
     {
         // Wheels Settings
         [SerializeField] private WheelSystem _wheels;

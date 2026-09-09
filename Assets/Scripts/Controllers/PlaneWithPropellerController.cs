@@ -1,4 +1,3 @@
-﻿using System;
 using Systems;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -26,6 +25,13 @@ namespace Controllers
         [SerializeField] private PropellerSystem _propellers;
 
         // Buttons Settings
+        [Header("Input Bindings")]
+        [SerializeField] private Key moveForwardButton;
+        [SerializeField] private Key moveBackwardButton;
+        [SerializeField] private Key moveRightButton;
+        [SerializeField] private Key moveLeftButton;
+        [SerializeField] private Key boostSpeedButton;
+
         [Header("Plane Input Bindings")]
         [SerializeField] private Key moveUpButton;
         [SerializeField] private Key moveDownButton;
@@ -59,9 +65,19 @@ namespace Controllers
             _propellers.Rotate(_speed, maxSpeed);
         }
 
-        protected override void ReadInput(Keyboard kb)
+        protected override void ReadInput()
         {
-            base.ReadInput(kb);
+            Keyboard kb = Keyboard.current;
+            if (kb == null)
+            {
+                ResetInput();
+                _ascendingOrDescendingInput = 0f;
+                return;
+            }
+
+            ReadBoostSpeedInput(kb[boostSpeedButton]);
+            ReadZAxisInput(kb[moveForwardButton], kb[moveBackwardButton]);
+            ReadXAxisInput(kb[moveRightButton], kb[moveLeftButton]);
             ReadYAxisInput(kb[moveUpButton], kb[moveDownButton]);
         }
 

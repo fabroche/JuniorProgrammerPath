@@ -1,5 +1,4 @@
-﻿using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine;
 using UnityEngine.InputSystem.Controls;
 
 namespace Controllers
@@ -32,14 +31,6 @@ namespace Controllers
         protected float _smoothedVerticalInput;
         protected float _smoothedHorizontalInput;
 
-        // Buttons Settings
-        [Header("Input Bindings")]
-        [SerializeField] private Key moveForwardButton;
-        [SerializeField] private Key moveBackwardButton;
-        [SerializeField] private Key moveRightButton;
-        [SerializeField] private Key moveLeftButton;
-        [SerializeField] private Key boostSpeedButton;
-
         // Getters
         public float Speed
         {
@@ -61,10 +52,7 @@ namespace Controllers
         
         protected virtual void Update()
         {
-            Keyboard kb = Keyboard.current;
-            if (kb == null) return;
-
-            ReadInput(kb);
+            ReadInput();
 
             Accelerate();
             Turn();
@@ -73,12 +61,8 @@ namespace Controllers
             _isMoving = _speed != 0f;
         }
 
-        protected virtual void ReadInput(Keyboard kb)
-        {
-            ReadBoostSpeedInput(kb[boostSpeedButton]);
-            ReadZAxisInput(kb[moveForwardButton], kb[moveBackwardButton]);
-            ReadXAxisInput(kb[moveRightButton], kb[moveLeftButton]);
-        }
+        // De donde sale la intencion de movimiento: teclado, IA, red... cada transporte lo resuelve
+        protected abstract void ReadInput();
 
         // Cada transporte gira a su manera
         protected abstract void Turn();
@@ -105,6 +89,14 @@ namespace Controllers
             _speed = Mathf.MoveTowards(_speed, targetSpeed, movementRate * Time.deltaTime);
         }
 
+        protected void ResetInput()
+        {
+            _verticalInput = 0f;
+            _horizontalInput = 0f;
+            _isBoostSpeedActive = false;
+        }
+
+        // Helpers de botones: solo los usa quien de verdad se maneja con teclas
         protected virtual void ReadBoostSpeedInput(ButtonControl boostSpeedButton)
         {
             _isBoostSpeedActive = boostSpeedButton.isPressed;

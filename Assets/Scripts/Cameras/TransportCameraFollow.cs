@@ -1,5 +1,6 @@
 ﻿using System;
 using Controllers;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Cameras
@@ -30,7 +31,7 @@ namespace Cameras
 
         protected virtual void Start()
         {
-            if (targetController == null) return;
+            if (!targetController) return;
             
             _targetTransform = targetController.transform;
             _camera = GetComponent<Camera>();
@@ -39,7 +40,7 @@ namespace Cameras
 
         protected virtual void LateUpdate()
         {
-            if (targetController == null) return;
+            if (!targetController) return;
             
             _targetTransportSpeed = targetController.Speed;
             _currentPositionFollowStrength = _followStrengthFromSpeed(_targetTransportSpeed)(followLagRatio);
