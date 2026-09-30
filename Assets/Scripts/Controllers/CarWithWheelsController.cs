@@ -1,14 +1,11 @@
-using Systems;
 using UnityEngine;
 
 namespace Controllers
 {
     // La fisica de un carro con ruedas. No sabe de donde viene el input.
-    public abstract class CarWithWheelsController : TransportController, IWheels
+    // Lo visual de las ruedas vive aparte, en WheelsVisual.
+    public abstract class CarWithWheelsController : TransportController
     {
-        // Wheels Settings
-        [SerializeField] private WheelSystem _wheels;
-
         protected override void Turn()
         {
             // Un carro no gira detenido y en reversa el volante se invierte:
@@ -16,17 +13,6 @@ namespace Controllers
             float speedRatio = Mathf.Clamp(_speed / maxSpeed, -1f, 1f);
 
             transform.Rotate(Vector3.up, turnAngle * _smoothedHorizontalInput * speedRatio * Time.deltaTime);
-        }
-
-        public void RotateWheels()
-        {
-            _wheels.Rotate(_speed, maxSpeed, _smoothedHorizontalInput);
-        }
-
-        protected override void Update()
-        {
-            base.Update();
-            RotateWheels();
         }
     }
 }

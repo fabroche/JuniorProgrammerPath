@@ -32,10 +32,23 @@ namespace Cameras
         protected virtual void Start()
         {
             if (!targetController) return;
-            
+
             _targetTransform = targetController.transform;
             _camera = GetComponent<Camera>();
-            
+
+        }
+
+        // El vehiculo del jugador nace en runtime, asi que no se puede enlazar desde
+        // el Inspector: quien lo spawnea avisa por aqui a la camara de su maquina.
+        public void SetTarget(TransportController target)
+        {
+            if (!target) return;
+
+            targetController = target;
+            _targetTransform = target.transform;
+
+            // Start pudo salir temprano sin cachearla, al no haber objetivo todavia.
+            if (!_camera) _camera = GetComponent<Camera>();
         }
 
         protected virtual void LateUpdate()
