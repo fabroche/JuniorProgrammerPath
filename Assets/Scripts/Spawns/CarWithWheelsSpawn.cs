@@ -6,6 +6,9 @@ namespace Spawns
 {
     public class CarWithWheelsSpawn : ObjectPool
     {
-        
+        private void FixedUpdate()
+        {
+            GetPooledObject();
+        }
     }
 }
