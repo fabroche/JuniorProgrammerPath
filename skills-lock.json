@@ -7,6 +7,12 @@
       "skillPath": "skills/2d-pixel-perfect/SKILL.md",
       "computedHash": "8e03347fd788af452856b8dd90fb3272f7667d0c47c81522f77036720e2d0666"
     },
+    "anatomy": {
+      "source": "wheresryan22/anatomy",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "b8ced09c690eb178684c27d02d0d8aaa48b28d5ce5b0bb9ea3addf2187ffd8a6"
+    },
     "asset-transformer-toolkit": {
       "source": "unity-technologies/skills",
       "sourceType": "github",
@@ -30,6 +36,18 @@
       "sourceType": "github",
       "skillPath": "skills/build-live-game/SKILL.md",
       "computedHash": "92efc29e31824fc1a5740ec5b30aa2cef4137de9fd69ddd36f3f6012aacdf03d"
+    },
+    "create-2d-physics": {
+      "source": "unity-technologies/skills",
+      "sourceType": "github",
+      "skillPath": "skills/create-2d-physics/SKILL.md",
+      "computedHash": "32f6eaa48dd8b55e4674ab028eb6180917ea31d5c07200f18bb3544e4092a63b"
+    },
+    "create-tile-palette-or-rule-tiles": {
+      "source": "unity-technologies/skills",
+      "sourceType": "github",
+      "skillPath": "skills/create-tile-palette-or-rule-tiles/SKILL.md",
+      "computedHash": "44dbb3b95fd75e70d07da4a4a3b7d1ca5acc93d4a0c9109ce5f86d11e90e172b"
     },
     "generate-editor-search-query": {
       "source": "unity-technologies/skills",
@@ -139,24 +157,6 @@
       "skillPath": "skills/sprite-segment-3x3grid/SKILL.md",
       "computedHash": "1a976e4458c520e69b14ede0584d4bb36a6aa0d6a4de53a0418e28a782149e1d"
     },
-    "tilemap-palette-create": {
-      "source": "unity-technologies/skills",
-      "sourceType": "github",
-      "skillPath": "skills/tilemap-palette-create/SKILL.md",
-      "computedHash": "96ae925384ce28bdef2b247b5767ca09217bb0f19a0a25779badcb0496b31fa2"
-    },
-    "tilemap-ruletile-createempty": {
-      "source": "unity-technologies/skills",
-      "sourceType": "github",
-      "skillPath": "skills/tilemap-ruletile-createempty/SKILL.md",
-      "computedHash": "e2804f994b72ec25453a426d73a1e6704423918fc21fc7320bd04d86c9028924"
-    },
-    "tilemap-ruletile-createfromsegment": {
-      "source": "unity-technologies/skills",
-      "sourceType": "github",
-      "skillPath": "skills/tilemap-ruletile-createfromsegment/SKILL.md",
-      "computedHash": "0400ca1ce040dc6df64af426d91a54e66868db3d0ac6f32a3770733d42c15291"
-    },
     "ui": {
       "source": "unity-technologies/skills",
       "sourceType": "github",
@@ -192,6 +192,12 @@
       "sourceType": "github",
       "skillPath": "skills/unity-package-management/SKILL.md",
       "computedHash": "2fe0a6df999b8249ca7b3d4b7edf7de7ff9ebdfe3c350d66ed13a3ac964a2972"
+    },
+    "unity-pipeline": {
+      "source": "unity-technologies/skills",
+      "sourceType": "github",
+      "skillPath": "skills/unity-pipeline/SKILL.md",
+      "computedHash": "27a6b81775c1fcb9bd4fa83af6094454f266444399c529e14645f293bba56483"
     },
     "urp-postprocessing": {
       "source": "unity-technologies/skills",
