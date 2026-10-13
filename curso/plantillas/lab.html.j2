@@ -2,6 +2,18 @@
    solos y añade el aviso de que el progreso se guarda en el navegador. #}
 {% extends "_leccion.html.j2" %}
 
+{% block extra_cabecera %}
+{% if meta.get('verificado') is sameas false %}
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+{% endif %}
+{% endblock %}
+
 {% block extra_pie %}
 <p class="pie-nota">
   Las casillas que marques se guardan en este navegador. Puedes cerrar la
