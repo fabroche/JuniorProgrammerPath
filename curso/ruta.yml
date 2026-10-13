@@ -1,0 +1,77 @@
+# La ruta del curso: un modulo por tramo del video.
+# El indice la pinta entera, con las lecciones que ya existen dentro de cada
+# modulo y el resto como pendiente. `laboratorio` es lo que se aplica en el
+# juego de vehiculos; es una propuesta hasta que se escribe el lab.
+
+video: https://www.youtube.com/watch?v=7glCsF9fv3s
+
+modulos:
+  - numero: 0
+    titulo: Punto de partida
+    resumen: Qué es un juego en red por dentro y cómo probar dos jugadores en tu máquina.
+    inicio: "00:00:00"
+    fin: "00:22:37"
+    laboratorio: Dos jugadores en Multiplayer Play Mode y lectura de tu VehicleOwnership.
+
+  - numero: 1
+    titulo: Conexión y autoridad
+    resumen: NetworkManager, NetworkObject y quién manda sobre el movimiento, servidor o cliente.
+    inicio: "00:22:37"
+    fin: "00:59:11"
+    laboratorio: Cambiar la autoridad del movimiento y observar qué se rompe.
+
+  - numero: 2
+    titulo: RPC y lógica de servidor
+    resumen: Mensajes entre máquinas y código que solo debe correr en una.
+    inicio: "00:59:11"
+    fin: "01:20:20"
+    laboratorio: Claxon por RPC y tráfico generado solo en el servidor.
+
+  - numero: 3
+    titulo: Objetos en red
+    resumen: Hacer aparecer, desaparecer y emparentar objetos que todos ven.
+    inicio: "01:20:20"
+    fin: "02:01:20"
+    laboratorio: Tráfico o carga como objetos de red.
+
+  - numero: 4
+    titulo: Estado continuo
+    resumen: NetworkVariable frente a RPC, y colisiones entre jugadores.
+    inicio: "02:01:20"
+    fin: "02:45:04"
+    laboratorio: La dirección de las ruedas (issue 16) y choques entre coches.
+
+  - numero: 5
+    titulo: Estado de partida y pausa
+    resumen: Una máquina de estados compartida y una pausa que respeta a todos.
+    inicio: "02:45:04"
+    fin: "03:11:16"
+    laboratorio: Espera, cuenta atrás, carrera y fin.
+
+  - numero: 6
+    titulo: Desconexiones y entradas tardías
+    resumen: Qué pasa cuando alguien se cae o llega con la partida empezada.
+    inicio: "03:11:16"
+    fin: "03:29:44"
+    laboratorio: Caída del anfitrión y límite de jugadores.
+
+  - numero: 7
+    titulo: Flujo de escenas y selección
+    resumen: Cambiar de escena en red y elegir personaje antes de jugar.
+    inicio: "03:29:44"
+    fin: "04:37:34"
+    laboratorio: Menú, selección de vehículo y juego.
+
+  - numero: 8
+    titulo: Jugar por internet
+    resumen: Encontrarse y conectarse fuera de la red local.
+    inicio: "04:37:34"
+    fin: "05:55:09"
+    laboratorio: Sesiones con código a través de Relay.
+
+  - numero: 9
+    titulo: Depurar y cerrar
+    resumen: Simular mala red, medir, y dejar la opción de un jugador.
+    inicio: "05:55:09"
+    fin: "06:20:02"
+    laboratorio: Latencia simulada, opción de un jugador y checkpoint final.

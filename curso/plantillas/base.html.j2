@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}{{ meta.titulo }}{% endblock %} · Multijugador en Unity</title>
+  <link rel="stylesheet" href="{{ rel }}estilos/design-system.css">
+  <link rel="stylesheet" href="{{ rel }}estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="{{ rel }}index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+{% block cuerpo %}{% endblock %}
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

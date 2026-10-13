@@ -1,0 +1,10 @@
+{# Laboratorio guiado. Marca el contenido para que los `::: paso` se numeren
+   solos y añade el aviso de que el progreso se guarda en el navegador. #}
+{% extends "_leccion.html.j2" %}
+
+{% block extra_pie %}
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+{% endblock %}

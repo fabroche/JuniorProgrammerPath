@@ -1,0 +1,41 @@
+{# Página de referencia: material que se consulta, no que se lee de corrido.
+   Por eso lo que añade sobre la estructura común es un sumario de la propia
+   página, construido a partir de sus `##`, para poder saltar al sitio. #}
+{% extends "_leccion.html.j2" %}
+
+{% block extra_cabecera %}
+<nav class="tarjeta sumario" id="sumario" hidden>
+  <p class="tarjeta-titulo">En esta página</p>
+  <ol></ol>
+</nav>
+{% endblock %}
+
+{% block extra_pie %}
+<p class="pie-nota">
+  Esta página es de consulta. No hace falta leerla entera hoy: vuelve a ella
+  cuando te encuentres con el problema.
+</p>
+
+<script>
+  // Sumario de la pagina. Se construye aqui en vez de en el generador para que
+  // escribir una referencia siga siendo escribir Markdown y nada mas: los `##`
+  // que pongas aparecen solos, sin declararlos en el front-matter.
+  (function () {
+    var caja = document.getElementById('sumario');
+    var lista = caja.querySelector('ol');
+    var titulos = document.querySelectorAll('.hoja h2');
+    if (titulos.length < 3) return;   // con dos secciones no aporta nada
+
+    titulos.forEach(function (h, i) {
+      if (!h.id) h.id = 'sec-' + (i + 1);
+      var a = document.createElement('a');
+      a.href = '#' + h.id;
+      a.textContent = h.textContent;
+      var li = document.createElement('li');
+      li.appendChild(a);
+      lista.appendChild(li);
+    });
+    caja.hidden = false;
+  })();
+</script>
+{% endblock %}

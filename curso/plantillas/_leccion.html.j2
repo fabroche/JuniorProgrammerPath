@@ -1,0 +1,158 @@
+{# Estructura comun a todas las lecciones. Cada tipo la extiende y, si lo
+   necesita, sobrescribe los bloques `extra_cabecera` o `extra_pie`. #}
+{% extends "base.html.j2" %}
+
+{% block cuerpo %}
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo {{ meta.modulo }} · {{ modulo.titulo }} · Lección {{ meta.leccion }}</span>
+    <span class="progreso">
+      {% for i in range(progreso.total) %}
+      <i class="{% if i < progreso.actual %}hecho{% elif i == progreso.actual %}actual{% endif %}"></i>
+      {% endfor %}
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">{{ meta.tipo }}</span>
+    {% if meta.get('duracion') %}
+    <span class="pildora pildora-duracion">~{{ meta.duracion }} min</span>
+    {% endif %}
+  </div>
+
+  <h1 class="leccion-titulo">{{ meta.titulo }}</h1>
+  {% if meta.get('resumen') %}
+  <p class="leccion-resumen">{{ meta.resumen }}</p>
+  {% endif %}
+
+  {% if meta.get('objetivos') %}
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      {% for o in meta.objetivos %}
+      <li>{{ o }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+
+  {% if meta.get('video') %}
+  {# Reproductor del video. Se pinta la caratula y el iframe solo se carga al
+     pulsar: asi la pagina no pide nada a YouTube hasta que se quiere ver. #}
+  <section class="tarjeta video" id="video" data-id="{{ video_id }}">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+        {% if meta.portada %}<img src="{{ rel }}{{ meta.portada }}" alt="">{% endif %}
+        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      {% for v in meta.video %}
+      <li>
+        <button type="button" data-inicio="{{ v.inicio | segundos }}" data-fin="{{ v.fin | segundos }}"
+                data-rango="{{ v.inicio }} – {{ v.fin }}">
+          <span class="video-capitulo-titulo">{{ v.titulo }}</span>
+          <span class="video-tramo">{{ v.inicio }} – {{ v.fin }}</span>
+        </button>
+      </li>
+      {% endfor %}
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+  {% endif %}
+
+  {% block extra_cabecera %}{% endblock %}
+
+  {{ contenido }}
+
+  {% block extra_pie %}{% endblock %}
+
+  {% if meta.get('fuentes') %}
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      {% for f in meta.fuentes %}
+      <li>
+        <a href="{{ f.url }}" target="_blank" rel="noopener">{{ f.titulo }}</a>
+        <span class="fuente-tipo {% if f.get('secundaria') %}secundaria{% endif %}">
+          {%- if f.get('secundaria') %}secundaria{% else %}oficial{% endif -%}
+        </span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+
+  <nav class="nav-leccion">
+    {% if anterior %}
+    <a href="{{ rel }}{{ anterior.enlace }}">
+      <span class="direccion">← Anterior</span>
+      {{ anterior.meta.titulo }}
+    </a>
+    {% else %}
+    <span class="hueco"></span>
+    {% endif %}
+    {% if siguiente %}
+    <a class="siguiente" href="{{ rel }}{{ siguiente.enlace }}">
+      <span class="direccion">Siguiente →</span>
+      {{ siguiente.meta.titulo }}
+    </a>
+    {% else %}
+    <span class="hueco"></span>
+    {% endif %}
+  </nav>
+
+</main>
+{% endblock %}

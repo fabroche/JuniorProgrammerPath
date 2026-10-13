@@ -1,0 +1,56 @@
+{% extends "base.html.j2" %}
+
+{% block titulo %}Curso de multijugador{% endblock %}
+
+{% block cuerpo %}
+<main>
+  <div class="hoja" style="padding-bottom: 24px;">
+    <h1 class="leccion-titulo">Multijugador en Unity, del vídeo a tu juego</h1>
+    <p class="leccion-resumen">
+      Ruta de estudio que sigue el curso de Code Monkey sobre Netcode for
+      GameObjects, capítulo a capítulo, y aplica cada concepto en el juego de
+      vehículos con la versión que tienes instalada.
+    </p>
+  </div>
+
+  {% for m in modulos %}
+  {% set propias = lecciones | selectattr("modulo", "equalto", m.numero) | list %}
+  <section class="modulo {% if not propias %}modulo-pendiente{% endif %}">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo {{ m.numero }}</span>
+      <h2>{{ m.titulo }}</h2>
+      <p>{{ m.resumen }}</p>
+      <p class="modulo-datos">
+        <a href="{{ video_url }}&t={{ m.inicio | segundos }}s" target="_blank" rel="noopener">Vídeo {{ m.inicio }} – {{ m.fin }}</a>
+        <span>En tu juego: {{ m.laboratorio }}</span>
+      </p>
+    </header>
+
+    {% if propias %}
+    <div class="rejilla">
+      {% for l in propias %}
+      <a class="ficha" href="{{ rel }}{{ l.enlace }}">
+        {% if l.meta.portada %}
+        <img class="ficha-portada" src="{{ rel }}{{ l.meta.portada }}" alt="" loading="lazy">
+        {% endif %}
+        <span class="ficha-modulo">Lección {{ l.modulo }}.{{ l.numero }}</span>
+        <h3>{{ l.meta.titulo }}</h3>
+        {% if l.meta.get('resumen') %}
+        <p>{{ l.meta.resumen }}</p>
+        {% endif %}
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">{{ l.meta.tipo }}</span>
+          {% if l.meta.get('duracion') %}
+          <span class="pildora pildora-duracion">~{{ l.meta.duracion }} min</span>
+          {% endif %}
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="modulo-vacio">Sin lecciones todavía.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</main>
+{% endblock %}
