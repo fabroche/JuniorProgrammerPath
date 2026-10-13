@@ -25,6 +25,16 @@ python -m venv .venv
 .venv/Scripts/python generar.py --servir   # genera, sirve y abre
 ```
 
+## Publicar
+
+```bash
+.venv/Scripts/python desplegar.py
+```
+
+Genera el curso y lo sube a la rama `gh-pages`, que GitHub Pages sirve en
+<https://fabroche.github.io/JuniorProgrammerPath/>. La rama solo contiene la
+salida del generador y se sustituye entera en cada despliegue.
+
 ## Estructura
 
 ```
