@@ -72,6 +72,12 @@ de pedir la carga, porque antes de ese evento hay clientes que todavía no está
 en la escena nueva.
 :::
 
+::: figura el-decorado
+:::
+
+Pulsa para que el servidor cambie de escena. El puesto de la derecha tarda más
+en cargar: en la tercera escena, el peón no aparece hasta que ha terminado.
+
 ## Lo que sobrevive al cambio
 
 ::: natural

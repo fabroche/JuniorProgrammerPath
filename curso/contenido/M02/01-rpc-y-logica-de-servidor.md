@@ -135,6 +135,12 @@ todos los mostradores:
                                                           suena el acierto
 ```
 
+::: figura el-aviso
+:::
+
+Pulsa en uno de los dos puestos. La cápsula no va de un puesto al otro: sube a
+la caja, y de la caja baja a los dos.
+
 ::: clave
 El cliente no cambia nada por su cuenta: **pide**. El servidor decide y
 **avisa**. Lo que cambia la partida ocurre en el aviso, que se ejecuta en todas

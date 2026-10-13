@@ -106,6 +106,13 @@ Si una instancia sin autoridad cambia el transform, su cambio no se envía a
 nadie y el siguiente dato recibido lo pisa.
 :::
 
+::: figura quien-manda
+:::
+
+Mueve el puntero para empujar tu coche y pulsa para cambiar la palanca de la
+caja. Con el servidor al mando, fíjate en el reloj de la caja: no se mueve,
+porque al servidor no le ha llegado nada, y tu coche vuelve a esa posición.
+
 El autor lo demuestra en este orden, y merece la pena verlo en el vídeo:
 
 1. Pone un `NetworkTransform` normal. El anfitrión se mueve y se sincroniza. El

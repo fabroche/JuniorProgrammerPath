@@ -67,6 +67,12 @@ en la lista de prefabs de red. Un cliente que llame a `Spawn()` recibe un error:
 no tiene autoridad para crear.
 :::
 
+::: figura la-prensa
+:::
+
+Pulsa para que el servidor cree el objeto, y otra vez para que lo retire. Los
+puestos no tienen pulsador: no pueden crear nada por su cuenta.
+
 Como quien coge el tomate puede ser un cliente, el vídeo vuelve al patrón de ida
 y vuelta del módulo 2:
 

@@ -155,18 +155,48 @@ Se añade la plantilla de cada tipo la primera vez que una lección lo necesita.
 
 ## Figuras de anatomy
 
-Una por módulo, para el mecanismo central. Cada figura es una carpeta en
-`figuras/` con su `build.mjs`, que usa el kit de la skill instalada en
-`.claude/skills/anatomy` y escribe dos páginas, una por tema:
+Una por módulo, para el mecanismo central. Todas son la misma máquina, un banco
+con dos puestos y una caja central, con un mecanismo distinto encima.
+
+| Módulo | Figura | Qué enseña |
+|---|---|---|
+| 0 | `copias-por-maquina` | Hay una copia de cada coche por máquina |
+| 1 | `quien-manda` | Autoridad del dueño frente a autoridad del servidor |
+| 2 | `el-aviso` | Un RPC de ida y vuelta |
+| 3 | `la-prensa` | Solo el servidor crea y retira objetos de red |
+| 4 | `reloj-maestro` | Una NetworkVariable, y lo que recibe quien llega tarde |
+| 5 | `la-salida` | El estado de la partida, que solo mueve el servidor |
+| 6 | `la-clavija` | Se va un cliente; se va el anfitrión |
+| 7 | `el-decorado` | Cambiar de escena, cada máquina a su ritmo |
+| 8 | `el-rele` | Por qué hace falta un relé |
+| 9 | `la-linea-mala` | Retraso, variación y pérdida |
+
+Cada figura es una carpeta en `figuras/` con su `build.mjs`, que usa el kit de
+la skill instalada en `.claude/skills/anatomy` y escribe dos páginas, una por
+tema:
 
 ```bash
-node figuras/copias-por-maquina/build.mjs
-node figuras/copias-por-maquina/build.mjs --light
+node figuras/quien-manda/build.mjs
+node figuras/quien-manda/build.mjs --light
 ```
 
-Las dos páginas se versionan, así el curso se genera sin Node. En la lección
-se incrusta con `::: figura copias-por-maquina` y el generador aborta si no
-están construidas.
+`figuras/_banco.mjs` tiene las piezas comunes: la placa, los puestos, los
+carriles, los vehículos, la caja y el arranque de la página. La figura del
+módulo 0 es anterior y no lo usa.
+
+Las dos páginas de cada figura se versionan, así el curso se genera sin Node. En
+la lección se incrusta con `::: figura nombre` y el generador aborta si no están
+construidas.
+
+Para comprobar una figura, desde su carpeta:
+
+```bash
+node ../../../.claude/skills/anatomy/scripts/lines.mjs nombre.html
+node ../../../.claude/skills/anatomy/scripts/drive.mjs nombre.html --actions pasos.json --preload ../_animado.js
+```
+
+`_animado.js` hace que la página de pruebas crea que el movimiento reducido no
+está activado. Sin él, en esta máquina las figuras no se animan al probarlas.
 
 ## Fuentes
 

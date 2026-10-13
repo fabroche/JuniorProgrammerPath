@@ -63,6 +63,12 @@ mantiene las copias un poco en el pasado para tener siempre dos datos entre los
 que moverse. Es el tick de retraso extra de la figura de la lección 0.1.
 :::
 
+::: figura la-linea-mala
+:::
+
+Conduce con el puntero y pulsa para pasar de una red a otra peor. Tu coche
+responde siempre igual. Mira el del otro puesto y la bandeja de lo perdido.
+
 ## Fiable o no fiable
 
 La pérdida conecta con una opción de los RPC que hasta ahora no hacía falta

@@ -91,6 +91,12 @@ clientes no calculan nada: escuchan `OnValueChanged` y lanzan los mismos eventos
 que ya movían la barra y el sonido en un jugador. La parte visual del juego no
 se entera de que ahora hay red.
 
+::: figura reloj-maestro
+:::
+
+Mueve el puntero para cambiar el valor del servidor. Luego pulsa para
+desenchufar el puesto de la derecha, cambia el valor, y vuelve a enchufarlo.
+
 ## Cuál usar
 
 | | RPC | NetworkVariable |

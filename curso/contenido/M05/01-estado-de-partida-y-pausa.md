@@ -123,6 +123,12 @@ consecuencia, el cambio de estado, no el detalle. No todo lo que el servidor
 sabe tiene que sincronizarse.
 :::
 
+::: figura la-salida
+:::
+
+Pulsa en cada puesto para bajar su palanca de «listo». La fase no cambia hasta
+que están las dos, y cuando cambia, cambia en los dos puestos a la vez.
+
 ## Pausar con más de un jugador
 
 En un jugador, pausar era poner `Time.timeScale` a cero. Con varios es otra

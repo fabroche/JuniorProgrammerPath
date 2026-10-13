@@ -68,6 +68,12 @@ que cambia es el camino que recorren los datos, y con él la latencia: cada
 mensaje hace una parada más.
 :::
 
+::: figura el-rele
+:::
+
+La figura arranca en la ruta directa: la cápsula llega a la compuerta del otro
+router y vuelve. Pulsa para pasar a la ruta por el relé.
+
 ## Antes de nada: servicios y sesión iniciada
 
 Cualquier servicio de Unity exige lo mismo, y el vídeo empieza por ahí:

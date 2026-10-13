@@ -101,6 +101,12 @@ salido» y «te han sacado de la sesión». El laboratorio empieza por averiguar
 recibes de verdad en cada caso.
 :::
 
+::: figura la-clavija
+:::
+
+Pulsa sobre un puesto para sacar su clavija, y sobre la caja para apagar al
+anfitrión. Mira qué desaparece en cada caso y qué testigo baja en la caja.
+
 ## Entrar tarde
 
 ::: natural
