@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Depurar y cerrar: mala red, medidas y un jugador · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 9 · Depurar y cerrar · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~25 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Depurar y cerrar: mala red, medidas y un jugador</h1>
+  <p class="leccion-resumen">Tu juego funciona porque lo has probado en la mejor red posible: tu propio ordenador. Cómo estropearla a propósito, qué medir, y por qué conviene poder jugar sin red.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Nombrar las tres formas en que una red real se desvía de la ideal</li>
+      <li>Explicar qué significa que un RPC sea fiable o no, y cuándo conviene cada cosa</li>
+      <li>Saber qué herramienta responde a cada pregunta sobre el tráfico de red</li>
+      <li>Entender el modo de un jugador como un anfitrión sin clientes</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M09/01-depurar-y-cerrar.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="21309" data-fin="22063"
+                data-rango="05:55:09 – 06:07:43">
+          <span class="video-capitulo-titulo">Multiplayer Debug Tools</span>
+          <span class="video-tramo">05:55:09 – 06:07:43</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="22063" data-fin="22276"
+                data-rango="06:07:43 – 06:11:16">
+          <span class="video-capitulo-titulo">Singleplayer Option</span>
+          <span class="video-tramo">06:07:43 – 06:11:16</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="22276" data-fin="22519"
+                data-rango="06:11:16 – 06:15:19">
+          <span class="video-capitulo-titulo">Gamepad Test</span>
+          <span class="video-tramo">06:11:16 – 06:15:19</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="22519" data-fin="22692"
+                data-rango="06:15:19 – 06:18:12">
+          <span class="video-capitulo-titulo">Final Game</span>
+          <span class="video-tramo">06:15:19 – 06:18:12</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="22692" data-fin="22802"
+                data-rango="06:18:12 – 06:20:02">
+          <span class="video-capitulo-titulo">CONGRATULATIONS</span>
+          <span class="video-tramo">06:18:12 – 06:20:02</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>Todo lo que has comprobado en este curso lo has comprobado con los dos jugadores
+en la misma máquina. Los datos tardaban menos de un milisegundo, llegaban todos
+y llegaban en orden. Ningún jugador real tendrá esa red.</p>
+<h2>Las tres formas de una mala red</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Una conexión real falla de tres maneras, y cada una rompe cosas distintas:</p>
+<ul>
+<li><strong>Retraso.</strong> Los datos tardan. Tu coche responde al instante, pero el del otro
+va por detrás, y cuanto más rápido vais, más lejos está de donde lo ves.</li>
+<li><strong>Variación.</strong> No tardan siempre lo mismo. Un dato llega en 20 milisegundos y
+el siguiente en 100. Los movimientos que deberían ser suaves van a tirones.</li>
+<li><strong>Pérdida.</strong> Algunos datos no llegan nunca.</li>
+</ul>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Son la latencia, el <em>jitter</em> y la pérdida de paquetes. Los paquetes viajan de
+forma independiente y pueden seguir rutas distintas, así que también pueden
+llegar desordenados.</p>
+<p>La interpolación del <code>NetworkTransform</code> existe para absorber la variación:
+mantiene las copias un poco en el pasado para tener siempre dos datos entre los
+que moverse. Es el tick de retraso extra de la figura de la lección 0.1.</p>
+</div></div><figure class="figura"><iframe data-figura="la-linea-mala" data-base="../figuras/la-linea-mala/la-linea-mala" loading="lazy" title="Figura interactiva"></iframe></figure><p>Conduce con el puntero y pulsa para pasar de una red a otra peor. Tu coche
+responde siempre igual. Mira el del otro puesto y la bandeja de lo perdido.</p>
+<h2>Fiable o no fiable</h2>
+<p>La pérdida conecta con una opción de los RPC que hasta ahora no hacía falta
+mirar.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Un mensaje <strong>fiable</strong> se reenvía hasta que llega. Nunca se pierde, pero si uno
+se atasca, los que van detrás esperan.</p>
+<p>Uno <strong>no fiable</strong> se envía una vez. Si se pierde, se perdió, y nadie espera por
+él.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El atributo <code>[Rpc]</code> tiene un campo <code>Delivery</code>, con <code>RpcDelivery.Reliable</code> por
+defecto y <code>RpcDelivery.Unreliable</code> como alternativa. Con entrega fiable y
+pérdida de paquetes, la retransmisión introduce esperas que afectan a los
+mensajes encolados detrás.</p>
+</div></div><table>
+<thead>
+<tr>
+<th>El mensaje es</th>
+<th>Entrega</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>«He cruzado la meta», «estoy listo»</td>
+<td>Fiable: perderlo rompe la partida</td>
+</tr>
+<tr>
+<td>Un claxon, una chispa, un sonido de paso</td>
+<td>No fiable: si se pierde, nadie lo echa de menos</td>
+</tr>
+</tbody>
+</table>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>La pregunta es la del autor: <strong>¿pasa algo si este mensaje no llega?</strong> Si la
+respuesta es no, hacerlo fiable solo añade esperas cuando la red va mal.</p>
+</div><h2>Estropear la red a propósito</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>No hace falta una mala conexión para probar con una. Hay una herramienta que
+retiene, desordena y tira los datos antes de enviarlos, según lo que le pidas.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El simulador de red aplica latencia, variación y pérdida a los paquetes del
+transporte. Solo actúa en el editor y en builds de desarrollo, nunca en un build
+final.</p>
+</div></div><div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>En el vídeo es una sección del componente de transporte, el <em>Debug Simulator</em>,
+con tres campos. En tu versión es un componente aparte, <strong>Network Simulator</strong>,
+del paquete Multiplayer Tools 2.2.12 que tienes instalado. Trae perfiles ya
+hechos con nombre, como banda ancha doméstica, satélite o distintas generaciones
+de red móvil, además de valores a mano.</p>
+<p>El autor prueba con 50 ms de retraso, 50 de variación y un 10 % de pérdida, y lo
+describe como una conexión bastante mala.</p>
+</div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>No hay valores correctos universales. Un juego por turnos funciona con medio
+segundo de retraso; uno de carreras se resiente con mucho menos. Lo que se
+busca al simular no es que todo vaya perfecto, sino descubrir <strong>qué se rompe
+primero</strong> y decidir si importa.</p>
+</div><h2>Medir</h2>
+<p>Tres herramientas, tres preguntas distintas:</p>
+<table>
+<thead>
+<tr>
+<th>Pregunta</th>
+<th>Herramienta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>¿Cuánto estoy enviando ahora mismo?</td>
+<td>El monitor de estadísticas en pantalla, dentro del juego</td>
+</tr>
+<tr>
+<td>¿Qué objeto o qué mensaje gasta más?</td>
+<td>El perfilador de Unity, en sus módulos de red</td>
+</tr>
+<tr>
+<td>¿Qué ha pasado y en qué orden?</td>
+<td>Los logs, uno por jugador</td>
+</tr>
+</tbody>
+</table>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>El monitor es un panel sobre el juego con contadores: bytes enviados y
+recibidos, número de RPC, y lo que quieras añadir. Sirve para ver de un vistazo
+si algo se dispara, por ejemplo al aparecer el tráfico.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>RuntimeNetStatsMonitor</code> es un componente de Multiplayer Tools que dibuja
+gráficas y contadores en ejecución. El perfilador desglosa el tráfico por
+objeto de red y por tipo de mensaje, fotograma a fotograma, y es donde se
+encuentra una NetworkVariable que cambia más de la cuenta o un RPC enviado en
+cada <code>Update</code>.</p>
+</div></div><h2>Un jugador</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Si el diseño lo permite, un juego multijugador debería poder jugarse sin red:
+sin sesión, sin servicios, sin internet. El autor lo defiende y lo añade al
+final.</p>
+<p>Lo interesante es cómo: <strong>no reescribe nada</strong>. Un jugador solo es un anfitrión
+al que no se une nadie.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El modo de un jugador arranca el NetworkManager como anfitrión con el transporte
+apuntando a la dirección local, y limita el aforo a uno. Todo el código de red
+sigue ejecutándose: <code>IsServer</code> e <code>IsOwner</code> valen verdadero, los RPC se entregan
+en el mismo proceso, y las NetworkVariable funcionan. No hace falta ningún
+servicio en la nube.</p>
+<p>El menú ofrece dos botones. El de un jugador salta la sala y la selección.</p>
+</div></div><div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>Es la recompensa de haber puesto bien las guardas durante todo el curso. Si cada
+decisión está tras <code>IsServer</code> y cada entrada de teclado tras <code>IsOwner</code>, el juego
+de un jugador sale gratis, porque el anfitrión cumple las dos.</p>
+</div><h2>El cierre del vídeo</h2>
+<p>Los últimos capítulos prueban el juego con mando y repasan el resultado. No
+traen técnica nueva. Sí una idea que el autor repite desde el principio y que
+vale como resumen del curso:</p>
+<ul>
+<li><strong>¿Dónde se decide?</strong> En el servidor, o en el dueño si se lo has prestado.</li>
+<li><strong>¿Es un suceso o un estado?</strong> RPC o NetworkVariable.</li>
+<li><strong>¿Lo tiene que ver todo el mundo?</strong> Si no, no lo sincronices.</li>
+<li><strong>¿Qué pasa con quien llega tarde, y con quien se va?</strong></li>
+</ul>
+<p>Con esas cuatro preguntas se sincroniza cualquier mecánica nueva.</p>
+<div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Latencia</dt>
+<dd>El tiempo que tarda un dato en llegar.</dd>
+<dt>Variación (<em>jitter</em>)</dt>
+<dd>Cuánto cambia esa latencia de un dato al siguiente.</dd>
+<dt>Pérdida de paquetes</dt>
+<dd>El porcentaje de datos que no llegan.</dd>
+<dt>Entrega fiable</dt>
+<dd>El mensaje se reenvía hasta confirmar que llegó.</dd>
+</dl>
+</div><p>En el último laboratorio le pones a tu juego una mala conexión y repites los
+experimentos de todo el curso para ver qué aguanta.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.multiplayer.tools@2.2/manual/index.html" target="_blank" rel="noopener">Multiplayer Tools 2.2 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/learn/dealing-with-latency.html" target="_blank" rel="noopener">Dealing with latency</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html" target="_blank" rel="noopener">RPC</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.multiplayer.playmode@1.6/manual/index.html" target="_blank" rel="noopener">Multiplayer Play Mode 1.6 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M08/02-sesiones-con-codigo.html">
+      <span class="direccion">← Anterior</span>
+      Sesiones con código
+    </a>
+    <a class="siguiente" href="../M09/02-mala-red-y-un-jugador.html">
+      <span class="direccion">Siguiente →</span>
+      Mala red y un jugador
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

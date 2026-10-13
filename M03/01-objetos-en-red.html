@@ -1,0 +1,366 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Objetos en red: aparecer, desaparecer, emparentar · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 3 · Objetos en red · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~30 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Objetos en red: aparecer, desaparecer, emparentar</h1>
+  <p class="leccion-resumen">Cómo se crea algo que todos ven, quién puede hacerlo, cómo se refiere una máquina a un objeto de otra, y por qué emparentar objetos de red tiene reglas propias.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Explicar por qué solo el servidor puede crear y destruir objetos de red</li>
+      <li>Describir los tres pasos de hacer aparecer un objeto para todos</li>
+      <li>Usar una referencia de red para nombrar un objeto en un RPC</li>
+      <li>Conocer la restricción de emparentado y la salida que usa el vídeo</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M03/01-objetos-en-red.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="4820" data-fin="5704"
+                data-rango="01:20:20 – 01:35:04">
+          <span class="video-capitulo-titulo">Sync Pick up Objects</span>
+          <span class="video-tramo">01:20:20 – 01:35:04</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="5704" data-fin="6621"
+                data-rango="01:35:04 – 01:50:21">
+          <span class="video-capitulo-titulo">Sync Kitchen Object Parent</span>
+          <span class="video-tramo">01:35:04 – 01:50:21</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="6621" data-fin="6819"
+                data-rango="01:50:21 – 01:53:39">
+          <span class="video-capitulo-titulo">Sync Plates Counter</span>
+          <span class="video-tramo">01:50:21 – 01:53:39</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="6819" data-fin="7280"
+                data-rango="01:53:39 – 02:01:20">
+          <span class="video-capitulo-titulo">Sync Trash Counter</span>
+          <span class="video-tramo">01:53:39 – 02:01:20</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>Hasta aquí el único objeto de red era el jugador, y lo creaba el NetworkManager
+solo. En estos cuatro capítulos el juego empieza a crear cosas en plena partida:
+un tomate al cogerlo de un contenedor, un plato cada pocos segundos. Cada una
+tiene que existir en todas las máquinas.</p>
+<h2><code>Instantiate</code> ya no basta</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p><code>Instantiate</code> crea un objeto en la máquina donde se ejecuta, y en ninguna más.
+Si un cliente lo llama, solo él ve el tomate.</p>
+<p>Para que lo vean todos hay que pedirle al servidor que lo cree, y que el
+servidor lo <strong>publique</strong>. A publicar un objeto en la red se le llama hacerlo
+aparecer, <em>spawn</em>.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Crear un objeto de red son tres pasos, y los tres ocurren en el servidor:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">GameObject</span><span class="w"> </span><span class="n">instancia</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instantiate</span><span class="p">(</span><span class="n">prefab</span><span class="p">);</span>
+<span class="n">NetworkObject</span><span class="w"> </span><span class="n">objetoDeRed</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">instancia</span><span class="p">.</span><span class="n">GetComponent</span><span class="o">&lt;</span><span class="n">NetworkObject</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="n">objetoDeRed</span><span class="p">.</span><span class="n">Spawn</span><span class="p">();</span>
+</code></pre>
+<p><code>Spawn()</code> asigna el identificador de red y envía a cada cliente la orden de
+instanciar ese mismo prefab. El prefab tiene que llevar <code>NetworkObject</code> y estar
+en la lista de prefabs de red. Un cliente que llame a <code>Spawn()</code> recibe un error:
+no tiene autoridad para crear.</p>
+</div></div><figure class="figura"><iframe data-figura="la-prensa" data-base="../figuras/la-prensa/la-prensa" loading="lazy" title="Figura interactiva"></iframe></figure><p>Pulsa para que el servidor cree el objeto, y otra vez para que lo retire. Los
+puestos no tienen pulsador: no pueden crear nada por su cuenta.</p>
+<p>Como quien coge el tomate puede ser un cliente, el vídeo vuelve al patrón de ida
+y vuelta del módulo 2:</p>
+<pre class="codigo"><code class="lenguaje-text">  CLIENTE                         SERVIDOR
+  ───────                         ────────
+  interactúa con el contenedor
+        │
+        └── RPC: «quiero un tomate» ──▶ Instantiate + Spawn
+                                              │
+                                    Netcode lo crea en todas
+</code></pre>
+<h2>Nombrar un objeto de otra máquina</h2>
+<p>El RPC «quiero un tomate, y dámelo a mí» necesita dos datos que no caben tal
+cual: qué tipo de objeto, y quién lo va a sujetar.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><ul>
+<li>El <strong>tipo</strong> es un ScriptableObject. Como en el módulo 2, se envía su posición
+en una lista que todas las máquinas tienen igual.</li>
+<li>El <strong>quién</strong> es un objeto que ya está en la red. De esos sí se puede hablar:
+cada uno tiene un número que es el mismo en todas las máquinas.</li>
+</ul>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>NetworkObjectReference</code> es una estructura serializable que envuelve el
+identificador de red de un <code>NetworkObject</code>. Se construye a partir del objeto y
+se resuelve en destino:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="na">[Rpc(SendTo.Server)]</span>
+<span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">PedirObjetoRpc</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">indiceTipo</span><span class="p">,</span><span class="w"> </span><span class="n">NetworkObjectReference</span><span class="w"> </span><span class="n">quien</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">quien</span><span class="p">.</span><span class="n">TryGet</span><span class="p">(</span><span class="k">out</span><span class="w"> </span><span class="n">NetworkObject</span><span class="w"> </span><span class="n">destinatario</span><span class="p">))</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// ...</span>
+<span class="p">}</span>
+</code></pre>
+<p><code>TryGet</code> devuelve <code>false</code> si el objeto ya no existe en esta máquina, cosa
+posible: entre el envío y la llegada puede haber sido destruido.</p>
+</div></div><h2>Destruir también es cosa del servidor</h2>
+<p>La papelera del vídeo destruye lo que le eches. La regla es simétrica a la de
+crear: solo el servidor retira un objeto de la red.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Un cliente no borra un objeto de red: le pide al servidor que lo haga. El
+servidor lo quita y desaparece en todas las máquinas a la vez.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>NetworkObject.Despawn(bool destroy = true)</code> retira el objeto de la red en todos
+los clientes. Con <code>destroy</code> en <code>true</code>, además destruye el GameObject. Con
+<code>false</code>, el objeto sigue existiendo en el servidor, fuera de la red, y puede
+volver a publicarse con <code>Spawn()</code>: es la base de un pool en red.</p>
+<p>Llamar a <code>Destroy</code> sobre un objeto de red desde un cliente es un error.</p>
+</div></div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>El autor añade un detalle fácil de pasar por alto. Antes de destruir el objeto,
+el servidor envía un RPC a todos para que <strong>suelten la referencia</strong>: el
+mostrador y el jugador guardan «tengo este objeto», y si el objeto desaparece
+sin avisar se quedan apuntando a algo que ya no existe.</p>
+</div><h2>Emparentar: la restricción que cambia el diseño</h2>
+<p>En un jugador, coger un tomate era hacerlo hijo de un punto de la mano del
+personaje. En red eso falla, y es el capítulo más largo del módulo.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Un objeto de red solo puede colgar de <strong>otro objeto de red</strong>, y directamente de
+él. El punto de la mano es un hijo cualquiera del jugador, sin identidad en la
+red, así que el tomate no puede colgar de ahí.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El padre de un <code>NetworkObject</code> debe ser otro <code>NetworkObject</code> ya publicado, o
+ninguno. No se admite como padre un transform hijo que no tenga su propio
+<code>NetworkObject</code>. El cambio de padre lo hace el servidor, o el dueño si el objeto
+tiene activado <code>AllowOwnerToParent</code>, con <code>TrySetParent</code>.</p>
+</div></div><p>El autor no pelea con la restricción: <strong>deja de emparentar</strong>. El tomate se queda
+suelto en la escena y lleva un script que, en cada <code>LateUpdate</code>, copia la
+posición y la rotación del punto que debe seguir. Quién sigue a quién se decide
+con un RPC a todos, que lleva una referencia de red al jugador o al mostrador.</p>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>Cuando una regla de la red choca con cómo lo hacías en un jugador, a menudo lo
+más barato no es buscar la forma de cumplir la regla, sino cambiar el diseño
+para no necesitarla. «Seguir a» sustituye a «ser hijo de», y funciona igual en
+todas las máquinas porque cada una lo calcula por su cuenta.</p>
+</div><h2>Crear con un temporizador</h2>
+<p>El mostrador de platos saca uno cada pocos segundos. Es el <code>DeliveryManager</code>
+otra vez: el temporizador corre solo en el servidor, y un RPC avisa a todos de
+que hay un plato más para que lo dibujen.</p>
+<p>Ahí los platos visibles no son objetos de red: son un dibujo que cada máquina
+hace al recibir el aviso. Solo se crea un plato de verdad cuando alguien lo
+coge.</p>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>No todo lo que se ve tiene que ser un objeto de red. Un objeto de red cuesta:
+identificador, mensajes, sincronización. Lo que es decoración derivada de un
+dato puede dibujarlo cada máquina sola.</p>
+</div><div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Hacer aparecer (<em>spawn</em>)</dt>
+<dd>Publicar un objeto ya instanciado para que exista en todas las máquinas.</dd>
+<dt>Retirar (<em>despawn</em>)</dt>
+<dd>Quitarlo de la red. Puede destruirlo o dejarlo vivo en el servidor.</dd>
+<dt>Referencia de red</dt>
+<dd>Un dato serializable que identifica un objeto de red, para nombrarlo en un RPC.</dd>
+<dt>Prefab de red</dt>
+<dd>Prefab con <code>NetworkObject</code>, registrado en la lista que comparten las máquinas.</dd>
+</dl>
+</div><p>En el laboratorio conviertes tus camiones en objetos de red y el cliente vuelve
+a ver tráfico.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/object-spawning.html" target="_blank" rel="noopener">Object spawning</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkobject.html" target="_blank" rel="noopener">NetworkObject</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/networkobject-parenting.html" target="_blank" rel="noopener">NetworkObject parenting</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/serialization/networkobject-serialization.html" target="_blank" rel="noopener">NetworkObject serialization</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/object-pooling.html" target="_blank" rel="noopener">Object pooling</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M02/02-el-claxon-y-el-trafico.html">
+      <span class="direccion">← Anterior</span>
+      El claxon y el tráfico
+    </a>
+    <a class="siguiente" href="../M03/02-trafico-en-red.html">
+      <span class="direccion">Siguiente →</span>
+      Tráfico en red
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

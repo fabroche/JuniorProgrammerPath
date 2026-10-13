@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Caídas y aforo · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 6 · Desconexiones y entradas tardías · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~60 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Caídas y aforo</h1>
+  <p class="leccion-resumen">Provocar las tres situaciones incómodas en tu juego, mirar qué pasa de verdad, y decidir qué hace en cada una: se va un cliente, se va el anfitrión, y alguien llega tarde.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Registrar qué eventos recibe cada máquina cuando alguien se desconecta</li>
+      <li>Limpiar el estado por jugador que guarda tu gestor de carrera</li>
+      <li>Avisar al cliente cuando el anfitrión desaparece</li>
+      <li>Decidir y aplicar una política para quien llega con la carrera empezada</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Este laboratorio empieza mirando y termina decidiendo. La primera mitad es un
+registro: antes de arreglar una desconexión hay que saber qué te cuenta el
+sistema cuando ocurre. En tu proyecto eso tiene una capa más que en el vídeo,
+porque la conexión la gestionan las sesiones de los servicios de Unity.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El laboratorio 5.2 terminado: existe <code>RaceManager</code> con su diccionario de listos</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 6.1 leída</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Un commit limpio antes de empezar</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Poner un registro de conexiones</h3><p>Crea un <code>MonoBehaviour</code> de diagnóstico en la escena que se suscriba a
+<code>NetworkManager.Singleton.OnConnectionEvent</code> y escriba en el log, en cada
+máquina: quién soy, qué tipo de evento es y el identificador que trae.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">AlConectar</span><span class="p">(</span><span class="n">NetworkManager</span><span class="w"> </span><span class="n">manager</span><span class="p">,</span><span class="w"> </span><span class="n">ConnectionEventData</span><span class="w"> </span><span class="n">datos</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">Debug</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="s">$&quot;[{manager.LocalClientId}] {datos.EventType} · cliente {datos.ClientId}&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>Los tipos posibles son <code>ClientConnected</code>, <code>ClientDisconnected</code>, <code>PeerConnected</code>
+y <code>PeerDisconnected</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El vídeo razona sobre qué identificador llega en cada caso con una versión
+antigua. En vez de fiarte de él o de esta lección, lo mides. Este registro es la
+herramienta de todo el laboratorio, y se queda en el proyecto.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Al crear la sesión y unirse el cliente, aparecen líneas en las dos consolas.
+Apunta cuáles salen en cada una: es tu tabla de referencia.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Se va el cliente</h3><p>Con dos jugadores en plena carrera, cierra Player 2. Mira la consola del
+anfitrión y la escena.</p>
+<p>Predice antes: ¿qué le pasa al coche del cliente? ¿Y a los camiones?</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Tu prefab de vehículo tiene <code>DontDestroyWithOwner</code> desactivado: el coche es del
+cliente y se va con él. Los camiones son del servidor y no dependen de nadie.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>En el anfitrión: una línea de desconexión con el identificador del cliente, y su
+coche desaparece de la escena. Los camiones siguen.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Limpiar lo que el servidor guardaba de él</h3><p>Tu <code>RaceManager</code> tiene un diccionario de quién está listo. Reproduce el fallo:
+dos jugadores en la sala de espera, uno pulsa «listo», el otro se desconecta sin
+pulsar. ¿Arranca la carrera?</p>
+<p>Después arréglalo: al desconectarse alguien, quita su entrada y vuelve a
+comprobar si están todos listos.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la pausa eterna del vídeo, con otro nombre. El estado que el servidor guarda
+por cliente no se limpia solo, y deja la partida esperando a alguien que ya no
+está.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Antes del arreglo: la carrera no arranca nunca, o arranca según cómo recorras la
+lista de conectados. Compruébalo con un log dentro del bucle: ¿figura todavía el
+que se acaba de ir? Es el aviso de la lección 6.1 sobre el orden.</p>
+<p>Después: al irse el que no estaba listo, la carrera arranca para el que queda.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Se va el anfitrión</h3><p>Ahora al revés: con dos jugadores, sal del modo Play en el editor, que es el
+anfitrión, y mira la ventana de Player 2 y su consola.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Sin anfitrión no hay servidor. La partida ha terminado para el cliente, y lo
+peor que puede pasar es que no se entere.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Anota qué evento recibe el cliente y con qué identificador. Anota también qué
+hace la interfaz de sesión de tu escena, que tiene sus propios eventos: el
+sistema de sesiones avisa cuando te sacan de una o cuando se elimina.</p>
+<p>No hay una respuesta única que dar aquí por adelantado. Lo que veas es lo que
+tu juego tiene que gestionar.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Decírselo al jugador</h3><p>Con lo que has observado, haz que el cliente muestre un mensaje cuando pierde al
+anfitrión, en vez de quedarse con la escena congelada. Un texto en el Canvas y
+un botón para volver al estado inicial es suficiente.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la pantalla de «el anfitrión se ha desconectado» del vídeo. No arregla nada,
+pero convierte un cuelgue aparente en algo que el jugador entiende.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Al caer el anfitrión, el cliente ve el mensaje. Al pulsar el botón, puede crear
+o unirse a otra sesión sin reiniciar el juego.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Llegar tarde: decidir</h3><p>En el laboratorio 5.2 viste que quien entra con la carrera empezada puede
+conducir. Elige una política y anótala:</p>
+<ol>
+<li><strong>Se permite.</strong> Entra y corre lo que queda.</li>
+<li><strong>Entra como espectador.</strong> Su coche no responde hasta la siguiente carrera.</li>
+<li><strong>Se rechaza.</strong> No entra hasta que acabe.</li>
+</ol>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El vídeo elige rechazar, y con eso se ahorra sincronizar los pedidos a quien
+llega tarde. Tú no tienes ese problema: todo tu estado de partida va en
+NetworkVariable. Puedes elegir por diseño y no por necesidad.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Una decisión anotada. Si es la primera, has terminado.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Llegar tarde: aplicar</h3><p>Según lo que hayas elegido:</p>
+<ul>
+<li><strong>Espectador:</strong> una condición más en <code>VehicleOwnership</code>, que ya decide si el
+controlador responde.</li>
+<li><strong>Rechazar:</strong> activa la aprobación de conexiones en el NetworkManager y asigna
+<code>ConnectionApprovalCallback</code>. Rechaza con un motivo si el estado no es
+<code>WaitingForPlayers</code>.</li>
+</ul>
+<p>Si vas por la aprobación, pon un log dentro del callback antes de nada.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Tú no arrancas el NetworkManager: lo hace el sistema de sesiones. Antes de
+construir sobre el callback, comprueba que se invoca en tu configuración. Y el
+límite de jugadores ya lo tienes en otro sitio: <code>MaxPlayers: 4</code> en
+<code>DefaultWidgetConfiguration</code>, que la sesión aplica antes de que nadie llegue al
+NetworkManager.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Con espectador: quien entra tarde ve la carrera y no puede conducir hasta la
+siguiente.</p>
+<p>Con rechazo: el log del callback aparece en el anfitrión, y el cliente que
+intenta entrar a mitad no entra. Recuerda poner <code>CreatePlayerObject</code> en
+verdadero al aprobar, o los que sí entran lo harán sin coche.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Tengo una tabla de qué evento recibe cada máquina en cada caso</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Si se va un jugador que no estaba listo, la carrera no se queda esperándolo</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El cliente recibe un mensaje cuando cae el anfitrión</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He decidido qué pasa con quien llega tarde, y está aplicado</li>
+</ul>
+</div><details class="problema"><summary>El callback de aprobación no se invoca nunca</summary><div class="desplegable-cuerpo"><p>Comprueba que la casilla de aprobación de conexiones está activada en el
+NetworkManager y que el delegado se asigna antes de crear la sesión. Si aun así
+no salta, la sesión está gestionando la conexión por su cuenta: usa la política
+de espectador, que no depende de ello.</p>
+</div></details><details class="problema"><summary>Tras caer el anfitrión no puedo crear otra sesión</summary><div class="desplegable-cuerpo"><p>El NetworkManager del cliente sigue activo. Hay que cerrarlo, y salir de la
+sesión, antes de empezar otra.</p>
+</div></details><details class="problema"><summary>Los que entran aprobados no tienen coche</summary><div class="desplegable-cuerpo"><p>Falta <code>respuesta.CreatePlayerObject = true</code> en la rama que aprueba.</p>
+</div></details>
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/connection-approval.html" target="_blank" rel="noopener">Connection approval</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkmanager.html" target="_blank" rel="noopener">NetworkManager</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.services.multiplayer@2.3/manual/index.html" target="_blank" rel="noopener">Multiplayer Services SDK 2.3 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M06/01-desconexiones-y-entradas-tardias.html">
+      <span class="direccion">← Anterior</span>
+      Desconexiones y entradas tardías
+    </a>
+    <a class="siguiente" href="../M07/01-escenas-y-seleccion.html">
+      <span class="direccion">Siguiente →</span>
+      Flujo de escenas y selección de personaje
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

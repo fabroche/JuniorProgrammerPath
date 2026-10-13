@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>El volante y los choques · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 4 · Estado continuo · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~70 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">El volante y los choques</h1>
+  <p class="leccion-resumen">Cerrar tu issue 16: las ruedas delanteras giran en todas las copias gracias a una NetworkVariable que escribe el dueño. Y un experimento con dos coches chocando.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Declarar una NetworkVariable con permiso de escritura para el dueño</li>
+      <li>Escribirla solo desde la copia propia y leerla en todas</li>
+      <li>Mantener funcionando sin red los objetos que no son de red</li>
+      <li>Observar cómo resuelve cada máquina un choque entre dos jugadores</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Tu issue 16 describe el problema mejor que cualquier ejemplo inventado: el giro
+del volante sale del teclado, el teclado solo existe en la máquina del dueño, y
+ese dato nunca cruza la red. Además no se puede deducir del movimiento, porque
+un coche parado no gira aunque el volante esté a tope.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El banco de la lección 0.2 funcionando</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 4.1 leída y el issue 16 releído</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Un commit limpio antes de empezar</li>
+</ul>
+</div><h2>Primera parte: el volante</h2>
+<div class="paso"><h3 class="paso-titulo">Decidir entre RPC y NetworkVariable</h3><p>Antes de escribir nada, aplica la pregunta de la lección 4.1 al giro del
+volante y anota la respuesta: si un jugador se conecta ahora, ¿necesita saber
+cómo está el volante de tu coche?</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>La herramienta se elige por el tipo de dato, no por costumbre. Hacer la pregunta
+antes evita sincronizar un estado con avisos, que es el error más común.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Sí lo necesita: es un estado que dura, no un suceso. Y cambia de forma continua
+mientras giras. Es una NetworkVariable.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Exponer el dato en el controlador</h3><p><code>_smoothedHorizontalInput</code> es <code>protected</code> en <code>TransportController</code>. Añade un
+getter público, junto a <code>Speed</code> y <code>MaxSpeed</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El componente de red va a vivir fuera del controlador, como <code>VehicleOwnership</code>,
+y necesita leer el giro. Así <code>TransportController</code> sigue sin saber que existe la
+red.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Compila. Nada cambia en el juego.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Crear el componente que lo comparte</h3><p>Crea un <code>NetworkBehaviour</code> nuevo en <code>Assets/Scripts/Multiplayer/</code>, con la
+variable que propone el issue:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">public</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">SteeringInput</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">    </span><span class="m">0f</span><span class="p">,</span>
+<span class="w">    </span><span class="n">NetworkVariableReadPermission</span><span class="p">.</span><span class="n">Everyone</span><span class="p">,</span>
+<span class="w">    </span><span class="n">NetworkVariableWritePermission</span><span class="p">.</span><span class="n">Owner</span><span class="p">);</span>
+</code></pre>
+<p>En su <code>Update</code>, <strong>solo si es el dueño</strong>, copia el giro del controlador a
+<code>SteeringInput.Value</code>. Añádelo al prefab del vehículo.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El permiso <code>Owner</code> es lo que deja escribir a un cliente. Sin él solo podría el
+servidor, que no conoce el teclado de nadie. Y la guarda de <code>IsOwner</code> no es
+opcional: una copia sin permiso que intente escribir provoca un error.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Compila y no hay errores en la consola de ninguno de los dos jugadores al
+conducir. Todavía no se ve nada nuevo: nadie lee el valor.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Leerlo en las ruedas</h3><p>En <code>WheelsVisual</code>, añade una referencia <strong>opcional</strong> al componente nuevo y úsala
+en lugar del <code>0f</code> fijo:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">wheels</span><span class="p">.</span><span class="n">Rotate</span><span class="p">(</span><span class="n">speed</span><span class="p">,</span><span class="w"> </span><span class="n">controller</span><span class="p">.</span><span class="n">MaxSpeed</span><span class="p">,</span><span class="w"> </span><span class="m">0f</span><span class="p">);</span>
+</code></pre>
+<p>Si la referencia es nula, sigue pasando cero.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p><code>WheelsVisual</code> lo usan también los camiones de tráfico, que no tienen volante de
+jugador. La referencia opcional mantiene el script funcionando para ellos sin
+que tengan que cargar con un componente que no necesitan. Está en las notas del
+propio issue.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>En tu ventana, las ruedas delanteras de tu coche giran al pulsar izquierda y
+derecha. En la ventana del otro jugador, las ruedas de <strong>tu</strong> coche giran igual.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">La prueba que antes era imposible</h3><p>Con el coche <strong>parado</strong>, mantén pulsada una dirección y mira la copia en la otra
+ventana.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es justo el caso que el issue declara irresoluble deduciendo del movimiento: un
+coche parado no rota, así que no hay nada que deducir. Si aquí las ruedas giran
+en la copia, el dato está viajando de verdad y no se está adivinando.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Las ruedas delanteras de la copia giran con el coche parado, igual que en el
+original.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Medir lo que cuesta</h3><p>El giro está suavizado, así que cambia en casi todos los fotogramas mientras
+giras. Responde:</p>
+<ol>
+<li>¿Cuántas veces por segundo se envía como mucho?</li>
+<li>¿Qué pasa con los valores intermedios dentro de un mismo tick?</li>
+<li>¿Se envía algo mientras vas recto?</li>
+</ol>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la contrapartida de la lección 4.1: una NetworkVariable no envía cada
+escritura, envía el último valor de cada tick. Aquí eso es lo que quieres.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><ol>
+<li>30, el <code>TickRate</code> de tu NetworkManager.</li>
+<li>Se pierden. Solo llega el último, y para un volante da igual.</li>
+<li>No: si el valor no cambia, no se envía.</li>
+</ol>
+</div></div><h2>Segunda parte: los choques</h2>
+<div class="paso"><h3 class="paso-titulo">Chocar y mirar desde los dos lados</h3><p>Con dos jugadores, lanza un coche contra el otro, primero despacio y luego a
+toda velocidad. Mira el mismo choque en las dos ventanas.</p>
+<p>Anota para cada caso: ¿se atraviesan? ¿Se empujan? ¿Ven lo mismo las dos
+ventanas?</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Cada máquina manda sobre su coche y solo tiene del otro una copia retrasada. El
+choque que ve cada una es contra esa copia, no contra el coche real. Es la
+decisión de diseño que el autor plantea en el último capítulo del módulo.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>No hay un resultado único que predecir aquí: depende de los colliders y del
+<code>Rigidbody</code> de tu prefab, y de la velocidad. Lo que sí debería cumplirse es que
+las dos ventanas <strong>no coinciden del todo</strong>, y que la diferencia crece con la
+velocidad. Apunta lo que veas: es el material de partida si decides arreglarlo.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Decidir qué quieres</h3><p>No implementes nada. Elige y justifica en tus notas una de estas tres:</p>
+<ol>
+<li><strong>Atravesarse.</strong> Los jugadores no chocan entre sí. Es lo más simple y lo que
+hacen muchos juegos de carreras en línea.</li>
+<li><strong>Bloquearse cada uno.</strong> Como en el vídeo: cada dueño trata las copias ajenas
+como obstáculos al moverse.</li>
+<li><strong>Que decida el servidor.</strong> Autoridad del servidor sobre el movimiento, con
+todo lo que vimos que cuesta en el laboratorio 1.2.</li>
+</ol>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El autor lo llama «una pregunta de diseño opcional», y lo es: ninguna de las
+tres es un fallo. Elegir sabiendo lo que cuesta cada una es el resultado del
+laboratorio.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Una decisión razonada, y si quieres, un issue nuevo en tu backlog con ella.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Las ruedas delanteras giran en la copia de mi coche que ve el otro jugador</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Giran también con el coche parado</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Los camiones de tráfico siguen funcionando sin el componente nuevo</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He visto un choque desde las dos ventanas y he elegido qué hacer con ellos</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El issue 16 se puede cerrar</li>
+</ul>
+</div><details class="problema"><summary>Error al escribir la variable: el cliente no tiene permiso</summary><div class="desplegable-cuerpo"><p>O falta <code>NetworkVariableWritePermission.Owner</code> en el constructor, o falta la
+guarda de <code>IsOwner</code> antes de asignar <code>.Value</code>, y está intentando escribir una
+copia que no es la dueña.</p>
+</div></details><details class="problema"><summary>Las ruedas giran en mi ventana pero no en la del otro</summary><div class="desplegable-cuerpo"><p><code>WheelsVisual</code> está leyendo el giro del controlador directamente en vez de la
+NetworkVariable. En la copia remota el controlador está apagado y su giro vale
+siempre cero.</p>
+</div></details><details class="problema"><summary>Los camiones dan un error de referencia nula</summary><div class="desplegable-cuerpo"><p><code>WheelsVisual</code> está usando la referencia sin comprobar si existe. Los camiones
+no llevan el componente.</p>
+</div></details>
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html" target="_blank" rel="noopener">NetworkVariable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/ownership.html" target="_blank" rel="noopener">Ownership</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/physics.html" target="_blank" rel="noopener">Physics</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M04/01-estado-continuo-networkvariable.html">
+      <span class="direccion">← Anterior</span>
+      Estado continuo: NetworkVariable frente a RPC
+    </a>
+    <a class="siguiente" href="../M05/01-estado-de-partida-y-pausa.html">
+      <span class="direccion">Siguiente →</span>
+      Estado de partida y pausa
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

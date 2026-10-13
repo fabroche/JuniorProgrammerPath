@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>La carrera · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 5 · Estado de partida y pausa · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~90 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">La carrera</h1>
+  <p class="leccion-resumen">Darle una partida a tu juego: nadie arranca hasta que los dos estén listos, hay una cuenta atrás, se corre contra el reloj y se acaba para todos a la vez.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Crear un gestor de partida como objeto de red colocado en la escena</li>
+      <li>Sincronizar su estado con una NetworkVariable enumerada</li>
+      <li>Llevar en el servidor la cuenta de quién está listo usando el remitente del RPC</li>
+      <li>Hacer que los vehículos solo respondan en la fase de carrera</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Hasta ahora, en cuanto alguien se conecta puede conducir. No hay principio ni
+final. Este laboratorio añade las cuatro fases del vídeo, adaptadas: esperando
+jugadores, cuenta atrás, carrera y fin.</p>
+<p>Es el laboratorio más largo hasta aquí. Cada paso deja el juego funcionando.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Los laboratorios de los módulos 2 y 4 terminados: has escrito ya un RPC y una NetworkVariable</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 5.1 leída</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Un commit limpio antes de empezar</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Crear el gestor en la escena</h3><p>Crea <code>Assets/Scripts/Multiplayer/RaceManager.cs</code>, un <code>NetworkBehaviour</code> con el
+enumerado de fases y su NetworkVariable. Pon un GameObject vacío en
+<code>Prototype 1</code> con ese script y un <strong>NetworkObject</strong>.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">public</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">RaceState</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">WaitingForPlayers</span><span class="p">,</span><span class="w"> </span><span class="n">Countdown</span><span class="p">,</span><span class="w"> </span><span class="n">Racing</span><span class="p">,</span><span class="w"> </span><span class="n">Finished</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">public</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="n">RaceState</span><span class="o">&gt;</span><span class="w"> </span><span class="n">State</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="n">RaceState</span><span class="o">&gt;</span><span class="p">(</span><span class="n">RaceState</span><span class="p">.</span><span class="n">WaitingForPlayers</span><span class="p">);</span>
+</code></pre>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El estado de la partida es de todos y quien entre tarde tiene que conocerlo: es
+una NetworkVariable. Y el gestor ya está en la escena, no nace al conectar. Con
+la gestión de escenas activada, que es como está tu NetworkManager, Netcode
+publica los objetos de red de la escena al arrancar el servidor.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Al crear la sesión, el gestor aparece en la Hierarchy con identificador de red.
+En el Inspector, <code>State</code> vale <code>WaitingForPlayers</code> en los dos jugadores.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Que los coches esperen</h3><p>Los vehículos solo deben responder en la fase <code>Racing</code>. El sitio natural es tu
+<code>VehicleOwnership</code>, que ya decide si el controlador está activo.</p>
+<p>Ahora depende de dos condiciones: ser el dueño <strong>y</strong> que la carrera esté en
+marcha. Suscríbete al <code>OnValueChanged</code> del gestor para recalcularlo cuando
+cambie la fase, y no olvides calcularlo también una vez al aparecer.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es el mismo arreglo que hace el vídeo: el jugador no se mueve si el juego no
+está en la fase de jugar. La suscripción evita preguntar el estado en cada
+fotograma, y el cálculo inicial cubre a quien entra con la carrera ya empezada:
+<code>OnValueChanged</code> no se dispara por el valor que ya había.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Tras crear la sesión, <strong>ningún</strong> coche responde al teclado, ni el del anfitrión
+ni el del cliente. Todavía no hay forma de salir de la espera.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Decir «estoy listo»</h3><p>Añade al gestor un RPC hacia el servidor que registre al remitente en un
+diccionario, y que el dueño de cada coche lo llame al pulsar una tecla.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">Dictionary</span><span class="o">&lt;</span><span class="kt">ulong</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="o">&gt;</span><span class="w"> </span><span class="n">_ready</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">Dictionary</span><span class="o">&lt;</span><span class="kt">ulong</span><span class="p">,</span><span class="w"> </span><span class="kt">bool</span><span class="o">&gt;</span><span class="p">();</span>
+
+<span class="na">[Rpc(SendTo.Server)]</span>
+<span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">PlayerReadyRpc</span><span class="p">(</span><span class="n">RpcParams</span><span class="w"> </span><span class="n">rpcParams</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">ulong</span><span class="w"> </span><span class="n">sender</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rpcParams</span><span class="p">.</span><span class="n">Receive</span><span class="p">.</span><span class="n">SenderClientId</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// marcar a `sender` como listo, y comprobar si lo están todos</span>
+<span class="p">}</span>
+</code></pre>
+<p>Cuando todos los de <code>NetworkManager.ConnectedClientsIds</code> estén listos, el
+servidor pone <code>State.Value</code> en <code>Countdown</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El gestor no es de ningún jugador, y aun así los clientes pueden llamarlo: el
+<code>[Rpc]</code> de tu versión lo puede invocar cualquiera por defecto. El remitente se
+lee de los parámetros, no se pasa como argumento, porque un argumento lo
+escribe el cliente y podría decir que es otro.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Con dos jugadores: pulsa la tecla en uno y no pasa nada visible. Púlsala en el
+otro y <code>State</code> cambia a <code>Countdown</code> en <strong>los dos</strong> Inspectores a la vez.</p>
+<p>Con un solo jugador conectado, basta con que pulse él.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">La cuenta atrás y el reloj</h3><p>Añade dos <code>NetworkVariable&lt;float&gt;</code>: los segundos que quedan de cuenta atrás y
+los que quedan de carrera. En el <code>Update</code> del gestor, <strong>solo en el servidor</strong>,
+réstales tiempo según la fase y avanza el estado cuando lleguen a cero.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El tiempo de la partida es un valor que cambia de forma continua y que debe ser
+el mismo para todos: el fogón del módulo 4. Si cada máquina llevara su propio
+reloj, acabarían la carrera en momentos distintos.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Tras estar los dos listos: tres segundos de cuenta atrás, los coches empiezan a
+responder los dos a la vez, corre el tiempo de carrera, y al acabar se quedan
+los dos parados.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Enseñarlo en pantalla</h3><p>Muestra la fase y el tiempo. Un <code>TextMeshPro</code> en un Canvas, que lea las
+NetworkVariable del gestor, es suficiente.</p>
+<p>Decide tú si lo actualizas con <code>OnValueChanged</code> o leyendo <code>.Value</code> en <code>Update</code>,
+y anota por qué.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>La interfaz es local: cada máquina dibuja la suya a partir de los datos
+compartidos. No hay nada de red en ella, y esa separación es la que hace que el
+vídeo pueda reutilizar toda su interfaz de un jugador sin tocarla.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Los dos jugadores ven el mismo texto de fase y el mismo tiempo, con una
+diferencia de como mucho un par de décimas en el del cliente.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Llegar tarde</h3><p>Con la carrera en marcha, cierra Player 2 y vuelve a unirte.</p>
+<p>Predice antes: ¿en qué fase verá el juego el que entra? ¿Podrá conducir?</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la comprobación de que elegiste bien la herramienta. Una NetworkVariable
+entrega su valor actual a quien se conecta; un RPC no.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El jugador que entra ve la fase <code>Racing</code> y el tiempo que queda de verdad, y su
+coche responde. Si no responde, falta el cálculo inicial del segundo paso.</p>
+<p>Queda una pregunta abierta que es el módulo 6: ¿debería poder entrar con la
+carrera empezada?</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Opcional: la pausa</h3><p>Si quieres llegar hasta donde llega el vídeo, añade la pausa compartida: otro
+diccionario en el servidor de quién está en pausa, una <code>NetworkVariable&lt;bool&gt;</code>,
+y <code>Time.timeScale</code> aplicado en su <code>OnValueChanged</code>.</p>
+<p>Antes de hacerlo, decide qué política de la lección 5.1 quieres para un juego de
+carreras.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>En una carrera, que alguien pueda parar a todos es discutible. Es justo el caso
+en el que el autor dice que muchos juegos optan por no pausar.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Una decisión anotada, y la implementación solo si elegiste pausa compartida.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Nadie puede conducir hasta que todos han dicho que están listos</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La cuenta atrás y el final ocurren a la vez en las dos ventanas</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El tiempo solo lo resta el servidor</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Quien entra con la carrera empezada ve la fase y el tiempo correctos</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La interfaz no contiene ninguna llamada de red</li>
+</ul>
+</div><details class="problema"><summary>El gestor no tiene identificador de red al crear la sesión</summary><div class="desplegable-cuerpo"><p>Le falta el <code>NetworkObject</code>, o el objeto está desactivado en la escena.</p>
+</div></details><details class="problema"><summary>Solo arranca el coche del anfitrión</summary><div class="desplegable-cuerpo"><p><code>VehicleOwnership</code> no está reaccionando al cambio de fase en el cliente. Revisa
+que te suscribes a <code>OnValueChanged</code> en <code>OnNetworkSpawn</code>, y que el gestor ya
+existe cuando lo buscas.</p>
+</div></details><details class="problema"><summary>Error de permiso al cambiar el estado</summary><div class="desplegable-cuerpo"><p>Un cliente está intentando escribir <code>State.Value</code>. Todo lo que avanza la fase
+tiene que estar tras <code>if (!IsServer) return;</code>.</p>
+</div></details><details class="problema"><summary>La cuenta atrás va el doble de rápido</summary><div class="desplegable-cuerpo"><p>El <code>Update</code> del gestor está restando tiempo también en el cliente, o hay dos
+gestores en la escena.</p>
+</div></details>
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html" target="_blank" rel="noopener">NetworkVariable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc-params.html" target="_blank" rel="noopener">RPC params</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/scenemanagement/inscene-placed-networkobjects.html" target="_blank" rel="noopener">In-scene placed NetworkObjects</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M05/01-estado-de-partida-y-pausa.html">
+      <span class="direccion">← Anterior</span>
+      Estado de partida y pausa
+    </a>
+    <a class="siguiente" href="../M06/01-desconexiones-y-entradas-tardias.html">
+      <span class="direccion">Siguiente →</span>
+      Desconexiones y entradas tardías
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Cómo funciona un juego en red por dentro · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 0 · Punto de partida · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~20 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Cómo funciona un juego en red por dentro</h1>
+  <p class="leccion-resumen">Qué hay realmente en cada máquina cuando dos personas juegan juntas, y quién decide qué es verdad. Sin esto, el resto del curso son componentes que marcas sin saber por qué.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Explicar por qué en un juego en red no existe un solo coche, sino una copia por máquina</li>
+      <li>Distinguir servidor, cliente y anfitrión, y decir cuál de los tres eres al pulsar «Create Session»</li>
+      <li>Nombrar las tres piezas de Netcode for GameObjects y qué aporta cada una</li>
+      <li>Leer tu propio `VehicleOwnership` y explicar por qué desactiva el controlador en las copias ajenas</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M00/01-como-funciona-un-juego-en-red.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="0" data-fin="596"
+                data-rango="00:00:00 – 00:09:56">
+          <span class="video-capitulo-titulo">Intro, Overview</span>
+          <span class="video-tramo">00:00:00 – 00:09:56</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="596" data-fin="903"
+                data-rango="00:09:56 – 00:15:03">
+          <span class="video-capitulo-titulo">Final Game Preview</span>
+          <span class="video-tramo">00:09:56 – 00:15:03</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="903" data-fin="1044"
+                data-rango="00:15:03 – 00:17:24">
+          <span class="video-capitulo-titulo">What you Should Know</span>
+          <span class="video-tramo">00:15:03 – 00:17:24</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="1044" data-fin="1357"
+                data-rango="00:17:24 – 00:22:37">
+          <span class="video-capitulo-titulo">Singleplayer Overview</span>
+          <span class="video-tramo">00:17:24 – 00:22:37</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>El vídeo empieza dando por hecho que ya sabes qué es un NetworkManager, un
+anfitrión, un RPC y una NetworkVariable, porque su autor lo explicó en otro
+vídeo anterior. Esta lección ocupa el lugar de ese requisito: primero el
+mecanismo, y a partir de ahí cada componente que añadas tendrá un motivo.</p>
+<p>Tú ya tienes dos coches moviéndose en red en la rama
+<code>multiplayer-player-sync</code>. Aquí vas a entender qué hiciste.</p>
+<h2>No hay un coche, hay una copia por máquina</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Cuando dos personas juegan juntas no comparten un juego. Cada una tiene <strong>su
+propio juego entero</strong> abierto en su ordenador, con su propia escena y sus
+propios objetos.</p>
+<p>Si hay dos jugadores y cada uno conduce un coche, en total existen cuatro
+coches: los dos que ve el primero y los dos que ve el segundo. Lo que llamamos
+«el coche azul» son en realidad dos objetos distintos, en dos ordenadores, que
+alguien se encarga de mantener parecidos.</p>
+<p>Ese alguien es la librería de red. Su trabajo es que las copias no se
+contradigan.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Cada participante ejecuta un proceso independiente de Unity con su propia
+escena y su propio grafo de GameObjects. No hay memoria compartida: el estado
+solo cruza de un proceso a otro serializado en mensajes.</p>
+<p>Netcode for GameObjects asigna a cada objeto de red un identificador común a
+todos los procesos y replica entre ellos lo que se le indique: transformaciones,
+variables y llamadas a métodos. Lo que no se marca para replicar no sale de la
+máquina donde ocurre.</p>
+</div></div><figure class="figura"><iframe data-figura="copias-por-maquina" data-base="../figuras/copias-por-maquina/copias-por-maquina" loading="lazy" title="Figura interactiva"></iframe></figure><p>Mueve el puntero sobre la figura. El turismo blanco es el tuyo y responde al
+instante. Mira el banco de la derecha: ahí hay <strong>otro</strong> turismo, que no conduce
+nadie. Lo arrastra un motor hasta donde dice el cable, y llega tarde.</p>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>Casi todos los fallos de un juego en red son el mismo: un dato que existe en
+una máquina y que alguien dio por hecho que estaba en todas. Tu issue 16 es
+exactamente esto: el giro del volante solo existe donde está el teclado.</p>
+</div><h2>Servidor, cliente y anfitrión</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Si cada máquina tiene su versión, hace falta que una mande cuando no se ponen de
+acuerdo. Esa máquina es el <strong>servidor</strong>. Las demás son <strong>clientes</strong>: le cuentan
+lo que quieren hacer y él les cuenta lo que ha pasado.</p>
+<p>Los clientes no hablan entre sí. Todo pasa por el servidor.</p>
+<p>Un servidor puede ser un ordenador en un centro de datos que no juega. Pero en
+un juego pequeño lo normal es que uno de los jugadores haga de servidor mientras
+juega. A ese jugador se le llama <strong>anfitrión</strong>.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>En la topología cliente-servidor hay dos tipos de instancia. El servidor tiene
+la autoridad y ejecuta la simulación principal; los clientes se conectan solo a
+él, nunca entre sí.</p>
+<p>Un <em>host</em> es una instancia que es servidor y cliente a la vez, en el mismo
+proceso. En un <code>NetworkBehaviour</code> del anfitrión, <code>IsServer</code>, <code>IsClient</code> e
+<code>IsHost</code> valen <code>true</code> los tres.</p>
+<p>El coste de esta topología es latencia: un cambio de un cliente viaja al
+servidor, se procesa y se reenvía al resto.</p>
+</div></div><p>En tu escena, el botón <strong>Create Session</strong> te convierte en anfitrión. Quien
+entra desde <strong>Session List</strong> es cliente.</p>
+<div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>El anfitrión no tiene latencia consigo mismo: sus órdenes llegan al servidor al
+instante porque son el mismo proceso. Un fallo de sincronización puede no verse
+nunca desde el anfitrión y verse siempre desde un cliente. Por eso todo lo que
+pruebes en este curso se mira <strong>desde el cliente</strong>, no solo desde quien creó la
+sesión.</p>
+</div><div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>El vídeo solo conoce la topología cliente-servidor. La versión que tienes
+instalada (Netcode for GameObjects 2.13.3) ofrece además una segunda,
+<em>distributed authority</em>, donde la autoridad se reparte entre los clientes.</p>
+<p>Tu <code>NetworkManager</code> está en cliente-servidor (<code>NetworkTopology: 0</code> en
+<code>Prototype 1.unity</code>), igual que el vídeo, y el curso se queda ahí.</p>
+</div><h2>Las tres piezas</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Netcode se apoya en tres componentes, y cada uno responde a una pregunta:</p>
+<ul>
+<li><strong>NetworkManager</strong>: ¿estamos conectados, y como qué? Hay uno solo en todo el
+juego.</li>
+<li><strong>NetworkObject</strong>: ¿este objeto existe para todos? Es una etiqueta de
+identidad que se pone en el objeto.</li>
+<li><strong>NetworkBehaviour</strong>: ¿qué hace este script distinto en cada máquina? Es un
+<code>MonoBehaviour</code> que además sabe en qué máquina está.</li>
+</ul>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>NetworkManager</code> es un singleton que contiene la configuración de red, el
+transporte y la lista de prefabs registrados, y expone el arranque como
+servidor, anfitrión o cliente. El tuyo tiene <code>TickRate: 30</code> y un <code>PlayerPrefab</code>
+que instancia por cada cliente que se conecta.</p>
+<p><code>NetworkObject</code> da al GameObject un identificador de red compartido por todos
+los procesos. Sin él, un objeto es local por definición.</p>
+<p><code>NetworkBehaviour</code> hereda de <code>MonoBehaviour</code> y añade el contexto de red
+(<code>IsOwner</code>, <code>IsServer</code>, <code>IsClient</code>, <code>IsHost</code>), el ciclo de vida
+(<code>OnNetworkSpawn</code>) y los dos mecanismos de sincronización: RPC y
+<code>NetworkVariable</code>. Exige un <code>NetworkObject</code> en el mismo objeto o en un padre.</p>
+</div></div><h2>Quién manda sobre cada objeto</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Que el servidor mande en general no significa que lo decida todo. Cada objeto
+de red tiene un <strong>dueño</strong>, y al dueño se le puede prestar permiso para decidir
+algunas cosas de ese objeto.</p>
+<p>Lo habitual es que cada jugador sea dueño de su personaje. Así, cuando giras, tu
+coche gira ya, sin esperar a que el servidor te dé permiso.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Por defecto el servidor tiene autoridad sobre todo. La propiedad
+(<em>ownership</em>) concede al cliente dueño un subconjunto de esa autoridad, y solo
+sobre las funciones configuradas para ello: un <code>NetworkTransform</code> con autoridad
+del dueño, o una <code>NetworkVariable</code> con <code>NetworkVariableWritePermission.Owner</code>.</p>
+<p>Lo que el dueño no puede hacer nunca: crear o destruir objetos de red ni cambiar
+la propiedad. Eso sigue siendo del servidor.</p>
+</div></div><p>Esto ya lo has escrito tú. En <code>Assets/Scripts/Multiplayer/VehicleOwnership.cs</code>:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnNetworkSpawn</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">controller</span><span class="p">.</span><span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">IsOwner</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">IsOwner</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+
+<span class="w">    </span><span class="n">TransportCameraFollow</span><span class="w"> </span><span class="n">cameraFollow</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">FindFirstObjectByType</span><span class="o">&lt;</span><span class="n">TransportCameraFollow</span><span class="o">&gt;</span><span class="p">();</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">cameraFollow</span><span class="p">)</span><span class="w"> </span><span class="n">cameraFollow</span><span class="p">.</span><span class="n">SetTarget</span><span class="p">(</span><span class="n">controller</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<p>Con la lección delante, cada línea tiene explicación:</p>
+<ul>
+<li>El script se ejecuta <strong>en todas las copias</strong> del coche, en todas las máquinas.
+No hay un <code>VehicleOwnership</code> del servidor y otro del cliente: es el mismo
+código, y <code>IsOwner</code> es lo único que cambia de una copia a otra.</li>
+<li><code>controller.enabled = IsOwner</code> apaga la lectura del teclado en las copias
+ajenas. Sin eso, tus teclas moverían también la copia del coche del otro
+jugador que vive en tu máquina.</li>
+<li>La cámara solo se engancha en la copia propia, por el mismo motivo.</li>
+<li>Va en <code>OnNetworkSpawn</code> y no en <code>Start</code> porque <code>IsOwner</code> no es fiable hasta que
+el objeto se ha registrado en la red.</li>
+</ul>
+<h2>Dos formas de cruzar la red</h2>
+<p>Todo lo que se sincroniza en el curso usa una de estas dos, y elegir entre ellas
+es la decisión que más se repite en el vídeo.</p>
+<div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>RPC</dt>
+<dd>Un mensaje: «ha pasado esto». Se envía una vez y quien no estaba conectado en
+ese momento no lo recibe. Módulo 2.</dd>
+<dt>NetworkVariable</dt>
+<dd>Un valor compartido: «esto vale tanto». Quien se conecta tarde recibe el valor
+actual. Módulo 4.</dd>
+</dl>
+</div><p>El <code>NetworkTransform</code> que mueve tus coches es un tercer caso ya resuelto: un
+componente que sincroniza posición y rotación por ti. Se ve en el módulo 1.</p>
+<h2>Lo que plantea el vídeo antes de empezar</h2>
+<p>El autor parte de un juego de un jugador ya terminado, <em>Kitchen Chaos</em>, y lo
+convierte a multijugador. En el último tramo explica que hay tres caminos:</p>
+<ul>
+<li>Terminar el juego para un jugador y convertirlo después. Sirve para juegos
+sencillos.</li>
+<li>Hacerlo multijugador desde el principio. Es lo mejor cuando la red es el
+centro del juego.</li>
+<li>Una mezcla: construir una mecánica, sincronizarla, y pasar a la siguiente.
+Dice que es lo que haría él trabajando solo.</li>
+</ul>
+<p>Tu proyecto va por el tercer camino: tienes coches y aviones funcionando, y
+vas a sincronizar mecánica a mecánica.</p>
+<div class="aviso aviso-nota"><span class="aviso-etiqueta">Nota</span><p>No necesitas el proyecto de <em>Kitchen Chaos</em>. En cada módulo ves el capítulo
+como caso resuelto y aplicas el concepto en tu juego de vehículos.</p>
+</div><div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Servidor</dt>
+<dd>La instancia que tiene la autoridad y ejecuta la simulación principal.</dd>
+<dt>Cliente</dt>
+<dd>Una instancia conectada al servidor. No se conecta a otros clientes.</dd>
+<dt>Anfitrión (<em>host</em>)</dt>
+<dd>Una instancia que es servidor y cliente a la vez.</dd>
+<dt>Dueño (<em>owner</em>)</dt>
+<dd>El cliente al que se ha prestado parte de la autoridad sobre un objeto.</dd>
+<dt>Autoridad</dt>
+<dd>El derecho a decidir el estado de algo. Lo que diga quien la tiene es lo que
+acaban viendo todos.</dd>
+</dl>
+</div><p>En la lección siguiente montas el laboratorio: dos jugadores en tu propia
+máquina con Multiplayer Play Mode, uno como anfitrión y otro como cliente, para
+poder mirar siempre desde los dos lados.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/index.html" target="_blank" rel="noopener">Netcode for GameObjects 2.13 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/client-server.html" target="_blank" rel="noopener">Client-server topology</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/network-topologies.html" target="_blank" rel="noopener">Network topologies</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/ownership.html" target="_blank" rel="noopener">Ownership</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkmanager.html" target="_blank" rel="noopener">NetworkManager</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkobject.html" target="_blank" rel="noopener">NetworkObject</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkbehaviour.html" target="_blank" rel="noopener">NetworkBehaviour</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s" target="_blank" rel="noopener">Code Monkey · Learn Unity Multiplayer (el vídeo que sigue este curso)</a>
+        <span class="fuente-tipo secundaria">secundaria</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <span class="hueco"></span>
+    <a class="siguiente" href="../M00/02-dos-jugadores-en-tu-maquina.html">
+      <span class="direccion">Siguiente →</span>
+      Dos jugadores en tu máquina
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

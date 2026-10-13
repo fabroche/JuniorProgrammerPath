@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Flujo de escenas y selección de personaje · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 7 · Flujo de escenas y selección · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~35 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Flujo de escenas y selección de personaje</h1>
+  <p class="leccion-resumen">Cómo se cambia de escena cuando hay varias máquinas, qué objetos sobreviven al cambio, y cómo se guarda una lista de jugadores con sus elecciones que todos ven.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Cambiar de escena para todos los jugadores a la vez</li>
+      <li>Explicar qué objetos sobreviven a un cambio de escena y cómo limpiarlos al volver al menú</li>
+      <li>Guardar una lista sincronizada de datos por jugador con NetworkList</li>
+      <li>Crear el objeto de cada jugador a mano en vez de dejárselo al NetworkManager</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M07/01-escenas-y-seleccion.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="12584" data-fin="14217"
+                data-rango="03:29:44 – 03:56:57">
+          <span class="video-capitulo-titulo">Connection Scene Flow</span>
+          <span class="video-tramo">03:29:44 – 03:56:57</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="14217" data-fin="16654"
+                data-rango="03:56:57 – 04:37:34">
+          <span class="video-capitulo-titulo">Character Select Scene</span>
+          <span class="video-tramo">03:56:57 – 04:37:34</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>El autor llama al primero de estos capítulos uno de los más importantes del
+curso. Hasta aquí todo ocurría en una escena con dos botones de prueba. Aquí el
+juego pasa a tener el recorrido de un juego de verdad:</p>
+<pre class="codigo"><code class="lenguaje-text">  Menú principal ──▶ Sala ──▶ Selección de personaje ──▶ Partida
+        ▲                                                   │
+        └───────────────── volver al menú ──────────────────┘
+</code></pre>
+<h2>Cambiar de escena para todos</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Si el anfitrión carga otra escena por su cuenta, se va él solo. Los clientes se
+quedan en la anterior, mirando un escenario del que el servidor ya no sabe nada.</p>
+<p>El cambio de escena tiene que pedírsele a la red, que se encarga de que todos
+carguen la misma.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>La carga se hace a través del gestor de escenas del NetworkManager, y solo
+desde el servidor:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">NetworkManager</span><span class="p">.</span><span class="n">Singleton</span><span class="p">.</span><span class="n">SceneManager</span><span class="p">.</span><span class="n">LoadScene</span><span class="p">(</span><span class="s">&quot;Partida&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">LoadSceneMode</span><span class="p">.</span><span class="n">Single</span><span class="p">);</span>
+</code></pre>
+<p>Requiere la gestión de escenas activada en el NetworkManager, y que la escena
+esté en la lista de escenas del build. Netcode ordena la carga a cada cliente y
+sincroniza a los que se conecten después con la escena activa. El evento
+<code>OnLoadEventCompleted</code> se dispara en el servidor cuando todos han terminado, con
+la lista de quienes lo lograron y quienes no.</p>
+</div></div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>La carga no es instantánea ni simultánea: cada máquina tarda lo suyo. El autor
+crea los personajes de los jugadores en <code>OnLoadEventCompleted</code>, no justo después
+de pedir la carga, porque antes de ese evento hay clientes que todavía no están
+en la escena nueva.</p>
+</div><figure class="figura"><iframe data-figura="el-decorado" data-base="../figuras/el-decorado/el-decorado" loading="lazy" title="Figura interactiva"></iframe></figure><p>Pulsa para que el servidor cambie de escena. El puesto de la derecha tarda más
+en cargar: en la tercera escena, el peón no aparece hasta que ha terminado.</p>
+<h2>Lo que sobrevive al cambio</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Al cargar una escena en modo único, Unity destruye todo lo de la anterior. Lo
+que tiene que durar toda la sesión, como el objeto que guarda quién es cada
+jugador, hay que marcarlo para que no se destruya.</p>
+<p>Eso trae un problema simétrico: al volver al menú, esos objetos siguen ahí. Si
+el menú crea otros nuevos, hay dos.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El NetworkManager se marca a sí mismo con <code>DontDestroyOnLoad</code>. El gestor
+multijugador del vídeo, que guarda los datos de los jugadores, hace lo mismo en
+su <code>Awake</code>.</p>
+<p>Al volver al menú principal, un script de limpieza destruye el NetworkManager y
+ese gestor si existen, de modo que la siguiente partida empieza de cero. Antes
+se ha llamado a <code>NetworkManager.Shutdown()</code>.</p>
+</div></div><p>El vídeo añade en este capítulo las dos ventanas que le faltaban a la conexión:
+una de «conectando», que se muestra desde que el cliente intenta entrar hasta
+que lo consigue, y otra de «no se pudo conectar», que enseña el motivo que
+devolvió la aprobación de conexiones del módulo 6.</p>
+<h2>Una lista de jugadores que todos ven</h2>
+<p>En la escena de selección cada jugador elige un color y pulsa «listo». Todos ven
+a todos, con su color y su estado. Hace falta una lista de datos por jugador,
+sincronizada.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Una NetworkVariable guarda un valor. Para una lista de jugadores que crece y
+mengua hace falta su versión en colección: una lista que el servidor modifica y
+que todas las máquinas tienen igual.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>NetworkList&lt;T&gt;</code> es una colección replicada. <code>T</code> debe ser un tipo de valor que
+Netcode sepa serializar y que implemente <code>IEquatable&lt;T&gt;</code>. Para datos propios se
+define una estructura:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">DatosJugador</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">IEquatable</span><span class="o">&lt;</span><span class="n">DatosJugador</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">INetworkSerializable</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">ulong</span><span class="w"> </span><span class="n">idCliente</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">idColor</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="nf">Equals</span><span class="p">(</span><span class="n">DatosJugador</span><span class="w"> </span><span class="n">otro</span><span class="p">)</span><span class="w"> </span><span class="o">=&gt;</span><span class="w"> </span><span class="n">idCliente</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">otro</span><span class="p">.</span><span class="n">idCliente</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="n">idColor</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="n">otro</span><span class="p">.</span><span class="n">idColor</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="n">NetworkSerialize</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span><span class="n">BufferSerializer</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="w"> </span><span class="n">serializador</span><span class="p">)</span><span class="w"> </span><span class="k">where</span><span class="w"> </span><span class="n">T</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">IReaderWriter</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">serializador</span><span class="p">.</span><span class="n">SerializeValue</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">idCliente</span><span class="p">);</span>
+<span class="w">        </span><span class="n">serializador</span><span class="p">.</span><span class="n">SerializeValue</span><span class="p">(</span><span class="k">ref</span><span class="w"> </span><span class="n">idColor</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>La lista se crea en la declaración o en <code>Awake</code>, nunca en <code>OnNetworkSpawn</code>. Su
+evento <code>OnListChanged</code> avisa de cada alta, baja o cambio.</p>
+</div></div><p>El servidor añade una entrada cuando alguien se conecta y la quita cuando se va,
+con los mismos eventos de conexión del módulo 6.</p>
+<div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>Una estructura dentro de una lista no se modifica en su sitio. Para cambiar el
+color de un jugador hay que leer su entrada, cambiar la copia y <strong>volver a
+asignarla</strong> en esa posición. Cambiar solo la copia no envía nada, y es un fallo
+silencioso: no da error, simplemente los demás no ven el cambio.</p>
+</div><div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>En el módulo 5 el autor usó un diccionario que vivía solo en el servidor para
+saber quién estaba listo. Aquí usa una lista sincronizada. La diferencia es
+quién necesita el dato: «están todos listos» solo lo decide el servidor; «de qué
+color es cada uno» lo tienen que dibujar todas las máquinas.</p>
+</div><h2>Elegir, y que no se repita</h2>
+<p>Cambiar de color es el patrón de ida y vuelta del módulo 2: el cliente pide un
+color con un RPC, el servidor comprueba que no lo tenga otro, y si está libre lo
+escribe en la lista. El cambio llega a todos por la lista, sin RPC de vuelta.</p>
+<p>El anfitrión puede además expulsar a un jugador. Es una llamada del servidor,
+<code>NetworkManager.DisconnectClient</code>, que en tu versión admite un texto con el
+motivo.</p>
+<h2>Crear al jugador a mano</h2>
+<p>Hasta aquí el NetworkManager creaba el personaje en cuanto alguien se conectaba.
+Con escenas eso ya no sirve: los jugadores se conectan en la sala, y su
+personaje no debe existir hasta la partida.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Se le quita al NetworkManager el prefab de jugador para que no cree nada al
+conectar. Cuando todos han cargado la escena de la partida, el servidor crea un
+personaje por cada jugador y se lo entrega.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Con el <code>PlayerPrefab</code> vacío no hay creación automática. En
+<code>OnLoadEventCompleted</code> de la escena de partida, el servidor recorre los clientes
+conectados y por cada uno:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">GameObject</span><span class="w"> </span><span class="n">instancia</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instantiate</span><span class="p">(</span><span class="n">prefabJugador</span><span class="p">);</span>
+<span class="n">instancia</span><span class="p">.</span><span class="n">GetComponent</span><span class="o">&lt;</span><span class="n">NetworkObject</span><span class="o">&gt;</span><span class="p">().</span><span class="n">SpawnAsPlayerObject</span><span class="p">(</span><span class="n">idCliente</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+</code></pre>
+<p><code>SpawnAsPlayerObject</code> publica el objeto, lo asigna a ese cliente como dueño y lo
+registra como su objeto de jugador. El segundo argumento hace que se destruya al
+descargar la escena.</p>
+</div></div><p>Como el servidor ya tiene la lista con la elección de cada uno, puede crear un
+personaje distinto para cada jugador o pintarlo de su color.</p>
+<div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Gestor de escenas de red</dt>
+<dd>La parte del NetworkManager que carga escenas en todas las máquinas a la vez.</dd>
+<dt>NetworkList</dt>
+<dd>Una lista replicada. Como una NetworkVariable, pero colección.</dd>
+<dt>Objeto de jugador</dt>
+<dd>El objeto de red que representa a un cliente. Cada cliente tiene como mucho
+uno.</dd>
+</dl>
+</div><p>En el laboratorio tu juego gana un menú, una pantalla para elegir vehículo y la
+partida como tercera escena.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/scenemanagement/using-networkscenemanager.html" target="_blank" rel="noopener">Using NetworkSceneManager</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/scenemanagement/scene-events.html" target="_blank" rel="noopener">Scene events</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/scenemanagement/inscene-placed-networkobjects.html" target="_blank" rel="noopener">In-scene placed NetworkObjects</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/serialization/inetworkserializable.html" target="_blank" rel="noopener">INetworkSerializable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/playerobjects.html" target="_blank" rel="noopener">Player objects</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M06/02-caidas-y-aforo.html">
+      <span class="direccion">← Anterior</span>
+      Caídas y aforo
+    </a>
+    <a class="siguiente" href="../M07/02-menu-seleccion-y-juego.html">
+      <span class="direccion">Siguiente →</span>
+      Menú, selección de vehículo y juego
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

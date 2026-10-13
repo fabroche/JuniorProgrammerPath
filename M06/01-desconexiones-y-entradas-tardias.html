@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Desconexiones y entradas tardías · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 6 · Desconexiones y entradas tardías · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~25 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Desconexiones y entradas tardías</h1>
+  <p class="leccion-resumen">Lo que distingue un prototipo de un juego: qué pasa cuando alguien se cae a mitad, cuando se cae el anfitrión, y cuando alguien intenta entrar con la partida empezada.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Reaccionar a la desconexión de un cliente y limpiar lo que dejó</li>
+      <li>Distinguir la caída de un cliente de la caída del anfitrión</li>
+      <li>Explicar por qué entrar tarde desincroniza lo que se envió por RPC</li>
+      <li>Aceptar o rechazar una conexión con la aprobación de conexiones</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M06/01-desconexiones-y-entradas-tardias.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="11476" data-fin="12020"
+                data-rango="03:11:16 – 03:20:20">
+          <span class="video-capitulo-titulo">Handle Disconnects</span>
+          <span class="video-tramo">03:11:16 – 03:20:20</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="12020" data-fin="12584"
+                data-rango="03:20:20 – 03:29:44">
+          <span class="video-capitulo-titulo">Handle Late Joins</span>
+          <span class="video-tramo">03:20:20 – 03:29:44</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>Todo lo anterior supone que los jugadores entran antes de empezar y se quedan
+hasta el final. Estos dos capítulos quitan esa suposición.</p>
+<h2>Se va un cliente</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Cuando un jugador se desconecta, su personaje desaparece solo. Pero todo lo
+demás que el juego sabía de él se queda: lo que llevaba en las manos, su
+casilla de «estoy listo», su pausa.</p>
+<p>Hay que enterarse de que se ha ido y recoger.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>NetworkManager.OnClientDisconnectCallback</code> se invoca con el identificador del
+cliente desconectado. El objeto de jugador se destruye con su dueño salvo que
+tenga activado <code>DontDestroyWithOwner</code>. Los demás objetos de red de los que fuera
+dueño siguen esa misma opción, objeto por objeto.</p>
+<p>El estado que el servidor guardaba por cliente, como los diccionarios del
+módulo 5, hay que limpiarlo a mano en ese callback.</p>
+</div></div><p>El vídeo encuentra aquí los dos fallos que anunciaba el módulo anterior:</p>
+<ul>
+<li><strong>La pausa eterna.</strong> Si el único jugador en pausa se va, su entrada del
+diccionario sigue en verdadero. El arreglo es volver a evaluar la pausa al
+desconectarse alguien.</li>
+<li><strong>El orden del aviso.</strong> Cuando salta el callback, el cliente que se va
+<strong>todavía figura</strong> en la lista de conectados. Si recalculas en ese momento, lo
+cuentas. El autor lo resuelve aplazando el recálculo al fotograma siguiente.</li>
+</ul>
+<div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>El segundo es de los que hacen perder una tarde. Un callback de «se ha ido»
+no garantiza que las listas internas ya reflejen que se ha ido. Si tu limpieza
+depende de la lista de conectados, compruébalo con un log antes de fiarte.</p>
+</div><h2>Se va el anfitrión</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Si el que se cae es el anfitrión, no se ha ido un jugador: se ha ido el
+servidor. No queda nadie que decida, así que la partida se acaba para todos.</p>
+<p>Lo mínimo es decírselo a los jugadores en vez de dejarlos mirando un juego
+congelado.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>En cliente-servidor no hay migración de anfitrión: al cerrarse el servidor, los
+clientes quedan desconectados. El vídeo lo detecta en el cliente comparando el
+identificador recibido en el callback con <code>NetworkManager.ServerClientId</code>, y
+muestra una pantalla de «el anfitrión se ha desconectado» con un botón para
+volver al menú.</p>
+<p>Antes de cargar el menú llama a <code>NetworkManager.Shutdown()</code>, y lo hace en
+<strong>todos</strong> los sitios desde los que se puede salir de la partida. Un
+NetworkManager que sigue vivo al volver al menú es una fuente clásica de
+errores al iniciar la siguiente partida.</p>
+</div></div><div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>Tu versión añade <code>OnConnectionEvent</code>, un único evento que distingue entre que
+se conecte o desconecte el cliente local y que lo haga otro par. También expone
+<code>NetworkManager.DisconnectReason</code>, un texto con el motivo que el servidor puede
+enviar al echar a alguien.</p>
+<p>Además, tú no arrancas el NetworkManager a mano: lo hace el sistema de sesiones
+de los servicios multijugador, que tiene sus propios eventos de «un jugador ha
+salido» y «te han sacado de la sesión». El laboratorio empieza por averiguar qué
+recibes de verdad en cada caso.</p>
+</div><figure class="figura"><iframe data-figura="la-clavija" data-base="../figuras/la-clavija/la-clavija" loading="lazy" title="Figura interactiva"></iframe></figure><p>Pulsa sobre un puesto para sacar su clavija, y sobre la caja para apagar al
+anfitrión. Mira qué desaparece en cada caso y qué testigo baja en la caja.</p>
+<h2>Entrar tarde</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Alguien se une con la partida a medias. ¿Qué ve?</p>
+<ul>
+<li>Los objetos de red que existen: sí, todos.</li>
+<li>El valor actual de cada NetworkVariable: sí.</li>
+<li>Lo que se avisó con un RPC antes de que llegara: <strong>no</strong>.</li>
+</ul>
+<p>Los pedidos pendientes del vídeo se enviaron con RPC. El que entra tarde ve una
+cocina con una lista de pedidos vacía mientras los demás tienen tres.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Al aprobar un cliente, el servidor le sincroniza los <code>NetworkObject</code> publicados
+y el estado actual de sus <code>NetworkVariable</code>. Los RPC no se almacenan: son
+mensajes de un instante, entregados a quien estuviera conectado al enviarlos.</p>
+<p>Para que un estado enviado por RPC llegue a quien entra tarde, hay que
+reenviárselo al conectarse, o haberlo modelado como NetworkVariable desde el
+principio.</p>
+</div></div><p>El autor explica por qué usó RPC para los pedidos aun sabiendo esto: una receta
+es un ScriptableObject y no cabe en una NetworkVariable tal cual. Habría que
+guardar su posición en la lista. No lo rehace, y toma otra decisión.</p>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>Entrar tarde no siempre hay que resolverlo. Se puede <strong>prohibir</strong>. El vídeo
+decide que nadie entra con la partida empezada, y con eso el problema de los
+pedidos desaparece sin escribir una línea de sincronización. Es una decisión de
+diseño legítima, y muchas veces la correcta.</p>
+</div><h2>La aprobación de conexiones</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Por defecto el servidor acepta a todo el que llama. Se puede poner un portero:
+una función que mira cada intento de conexión y dice sí o no, con un motivo.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Con la aprobación activada en el NetworkManager, el servidor invoca
+<code>ConnectionApprovalCallback</code> por cada cliente que intenta entrar:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">AlAprobar</span><span class="p">(</span><span class="n">NetworkManager</span><span class="p">.</span><span class="n">ConnectionApprovalRequest</span><span class="w"> </span><span class="n">peticion</span><span class="p">,</span>
+<span class="w">                       </span><span class="n">NetworkManager</span><span class="p">.</span><span class="n">ConnectionApprovalResponse</span><span class="w"> </span><span class="n">respuesta</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">partidaEmpezada</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="n">respuesta</span><span class="p">.</span><span class="n">Approved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="p">;</span>
+<span class="w">        </span><span class="n">respuesta</span><span class="p">.</span><span class="n">Reason</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;La partida ya ha empezado&quot;</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">respuesta</span><span class="p">.</span><span class="n">Approved</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">;</span>
+<span class="w">    </span><span class="n">respuesta</span><span class="p">.</span><span class="n">CreatePlayerObject</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+<p>No es un evento sino un delegado: se asigna, no se suma. Y al aprobar hay que
+poner <code>CreatePlayerObject</code> en verdadero, o el cliente entra sin personaje.</p>
+</div></div><p>El vídeo rechaza en dos casos: partida empezada y sala llena. El texto de
+<code>Reason</code> llega al cliente rechazado, que puede mostrarlo en vez de un genérico
+«no se pudo conectar».</p>
+<div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Entrada tardía (<em>late join</em>)</dt>
+<dd>Conectarse con la partida ya empezada.</dd>
+<dt>Aprobación de conexiones</dt>
+<dd>Una función del servidor que acepta o rechaza cada intento de conexión.</dd>
+<dt>Migración de anfitrión</dt>
+<dd>Que otro jugador pase a ser el servidor cuando el anfitrión se va. Netcode no
+la hace en cliente-servidor.</dd>
+</dl>
+</div><p>En el laboratorio provocas las tres situaciones en tu juego y decides qué hace
+en cada una.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/connection-approval.html" target="_blank" rel="noopener">Connection approval</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkmanager.html" target="_blank" rel="noopener">NetworkManager</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/spawning-synchronization.html" target="_blank" rel="noopener">Spawning synchronization</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/learn/rpcvnetvar.html" target="_blank" rel="noopener">RPC vs NetworkVariable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M05/02-la-carrera.html">
+      <span class="direccion">← Anterior</span>
+      La carrera
+    </a>
+    <a class="siguiente" href="../M06/02-caidas-y-aforo.html">
+      <span class="direccion">Siguiente →</span>
+      Caídas y aforo
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

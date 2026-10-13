@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estado de partida y pausa · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 5 · Estado de partida y pausa · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~25 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Estado de partida y pausa</h1>
+  <p class="leccion-resumen">Una máquina de estados que comparten todos: esperar a que estén listos, cuenta atrás, jugar y terminar. Y qué significa pausar cuando hay más de un jugador.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Sincronizar una máquina de estados con una NetworkVariable de tipo enumerado</li>
+      <li>Saber quién envió un RPC para llevar la cuenta de qué jugadores están listos</li>
+      <li>Separar lo que es estado de la partida de lo que es estado local de un jugador</li>
+      <li>Elegir una política de pausa y conocer el coste de cada una</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M05/01-estado-de-partida-y-pausa.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="9904" data-fin="10894"
+                data-rango="02:45:04 – 03:01:34">
+          <span class="video-capitulo-titulo">Sync Game State</span>
+          <span class="video-tramo">02:45:04 – 03:01:34</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="10894" data-fin="11476"
+                data-rango="03:01:34 – 03:11:16">
+          <span class="video-capitulo-titulo">Sync Pause</span>
+          <span class="video-tramo">03:01:34 – 03:11:16</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>El <code>KitchenGameManager</code> del vídeo lleva la partida con cuatro estados: esperando
+para empezar, cuenta atrás, jugando y fin. En un jugador, pulsar una tecla
+arrancaba la cuenta atrás. Con varios hay que contestar primero: ¿la tecla de
+quién?</p>
+<h2>El estado de la partida es de todos</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>En qué fase está la partida no depende de ningún jugador: es lo mismo para
+todos, dura en el tiempo, y quien entre tiene que saberlo.</p>
+<p>Por la pregunta del módulo 4, eso es un valor compartido, y lo cambia el
+servidor.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El estado es una <code>NetworkVariable</code> de tipo enumerado, que solo escribe el
+servidor. Los temporizadores de la cuenta atrás y de la partida son otras dos
+<code>NetworkVariable&lt;float&gt;</code>. Toda la lógica que avanza la máquina de estados queda
+tras la guarda <code>if (!IsServer) return;</code>.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">public</span><span class="w"> </span><span class="k">enum</span><span class="w"> </span><span class="n">Estado</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">EsperandoJugadores</span><span class="p">,</span><span class="w"> </span><span class="n">CuentaAtras</span><span class="p">,</span><span class="w"> </span><span class="n">Jugando</span><span class="p">,</span><span class="w"> </span><span class="n">Fin</span><span class="w"> </span><span class="p">}</span>
+
+<span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="n">Estado</span><span class="o">&gt;</span><span class="w"> </span><span class="n">estado</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="n">Estado</span><span class="o">&gt;</span><span class="p">(</span><span class="n">Estado</span><span class="p">.</span><span class="n">EsperandoJugadores</span><span class="p">);</span>
+</code></pre>
+<p>Los clientes no calculan nada. Reaccionan a <code>OnValueChanged</code> lanzando el mismo
+evento de «el estado ha cambiado» que el juego ya usaba, de modo que la interfaz
+no nota la diferencia.</p>
+</div></div><p>El gestor de la partida es un objeto que ya está en la escena, no uno que se
+crea al conectar. Para que tenga red basta con ponerle un <code>NetworkObject</code>: con la
+gestión de escenas activada, Netcode publica los objetos de red colocados en la
+escena al arrancar el servidor.</p>
+<h2>«Estoy listo» es de cada uno</h2>
+<p>Para empezar, el vídeo espera a que <strong>todos</strong> los jugadores pulsen la tecla. Eso
+junta dos datos de naturaleza distinta:</p>
+<table>
+<thead>
+<tr>
+<th>Dato</th>
+<th>De quién es</th>
+<th>Cómo viaja</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Yo ya he pulsado</td>
+<td>Local: solo le importa a mi interfaz</td>
+<td>No viaja</td>
+</tr>
+<tr>
+<td>Qué jugadores han pulsado</td>
+<td>Del servidor</td>
+<td>Cada cliente lo comunica con un RPC</td>
+</tr>
+<tr>
+<td>Estamos todos listos</td>
+<td>De la partida</td>
+<td>Cambio de la NetworkVariable de estado</td>
+</tr>
+</tbody>
+</table>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Cada jugador le dice al servidor «estoy listo». El servidor lleva una lista de
+quién lo ha dicho. Cuando están todos, cambia el estado a cuenta atrás, y ese
+cambio llega a todas las máquinas.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El servidor guarda un <code>Dictionary&lt;ulong, bool&gt;</code> indexado por identificador de
+cliente. El identificador del remitente no se pasa como argumento: se lee de los
+parámetros que Netcode añade al RPC, que el cliente no puede falsificar.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="na">[Rpc(SendTo.Server)]</span>
+<span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">EstoyListoRpc</span><span class="p">(</span><span class="n">RpcParams</span><span class="w"> </span><span class="n">rpcParams</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">default</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="kt">ulong</span><span class="w"> </span><span class="n">quien</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">rpcParams</span><span class="p">.</span><span class="n">Receive</span><span class="p">.</span><span class="n">SenderClientId</span><span class="p">;</span>
+<span class="w">    </span><span class="n">listos</span><span class="p">[</span><span class="n">quien</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">true</span><span class="p">;</span>
+
+<span class="w">    </span><span class="k">foreach</span><span class="w"> </span><span class="p">(</span><span class="kt">ulong</span><span class="w"> </span><span class="n">id</span><span class="w"> </span><span class="k">in</span><span class="w"> </span><span class="n">NetworkManager</span><span class="p">.</span><span class="n">ConnectedClientsIds</span><span class="p">)</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">listos</span><span class="p">.</span><span class="n">ContainsKey</span><span class="p">(</span><span class="n">id</span><span class="p">)</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">listos</span><span class="p">[</span><span class="n">id</span><span class="p">])</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="n">estado</span><span class="p">.</span><span class="n">Value</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Estado</span><span class="p">.</span><span class="n">CuentaAtras</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+</div></div><div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>En el vídeo el parámetro es <code>ServerRpcParams serverRpcParams = default</code> y el
+remitente se lee con <code>serverRpcParams.Receive.SenderClientId</code>. Con el atributo
+<code>[Rpc]</code> de tu versión el tipo se llama <code>RpcParams</code>; el resto es igual.</p>
+</div><div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>El autor usa un diccionario y no una lista por un motivo que se le escapa a
+cualquiera la primera vez: los identificadores de cliente no son consecutivos ni
+estables. Si alguien se va y entra otro, los números no se reutilizan en orden.
+Un diccionario por identificador no depende de eso.</p>
+</div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>Fíjate en que el diccionario <strong>no</strong> es una NetworkVariable. Vive solo en el
+servidor, porque solo él lo necesita para decidir. A los clientes les llega la
+consecuencia, el cambio de estado, no el detalle. No todo lo que el servidor
+sabe tiene que sincronizarse.</p>
+</div><figure class="figura"><iframe data-figura="la-salida" data-base="../figuras/la-salida/la-salida" loading="lazy" title="Figura interactiva"></iframe></figure><p>Pulsa en cada puesto para bajar su palanca de «listo». La fase no cambia hasta
+que están las dos, y cuando cambia, cambia en los dos puestos a la vez.</p>
+<h2>Pausar con más de un jugador</h2>
+<p>En un jugador, pausar era poner <code>Time.timeScale</code> a cero. Con varios es otra
+decisión de diseño, y el autor expone las opciones antes de elegir:</p>
+<table>
+<thead>
+<tr>
+<th>Política</th>
+<th>Qué pasa</th>
+<th>Dónde se usa</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No se pausa</td>
+<td>El menú se abre, la partida sigue para todos</td>
+<td>Competitivos: nadie debe poder parar al rival</td>
+</tr>
+<tr>
+<td>Pausa local</td>
+<td>Se para solo tu máquina</td>
+<td>Casi nunca: te desincronizas del resto</td>
+</tr>
+<tr>
+<td>Pausa compartida</td>
+<td>Si alguien pausa, se para para todos</td>
+<td>Cooperativos entre amigos</td>
+</tr>
+</tbody>
+</table>
+<p>El vídeo implementa la tercera, con el mismo mecanismo que «estoy listo»: un
+diccionario en el servidor de quién está en pausa, y una NetworkVariable
+booleana <code>estaPausado</code> que vale verdadero mientras quede <strong>al menos uno</strong>.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Cada máquina mira ese valor compartido. Cuando pasa a verdadero, detiene su
+tiempo; cuando vuelve a falso, lo reanuda. Nadie reanuda por su cuenta: hasta
+que no salga de la pausa el último, siguen todos parados.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>Time.timeScale</code> es local a cada proceso. Lo que se sincroniza es la decisión,
+en una <code>NetworkVariable&lt;bool&gt;</code>, y cada instancia aplica el <code>timeScale</code> en su
+<code>OnValueChanged</code>. El jugador distingue en su interfaz entre «he pausado yo», que
+muestra el menú, y «ha pausado otro», que muestra un aviso de espera.</p>
+</div></div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>Con <code>Time.timeScale</code> a cero, lo que dependa de <code>Time.deltaTime</code> se detiene, pero
+la red sigue funcionando: los RPC llegan y las NetworkVariable se sincronizan.
+Menos mal, porque si no nadie podría enviar el «ya no estoy en pausa».</p>
+</div><p>El autor deja un cabo suelto que recoge en el módulo siguiente: si el único
+jugador en pausa se desconecta, su entrada del diccionario se queda en
+verdadero y la partida no se reanuda nunca.</p>
+<div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Máquina de estados</dt>
+<dd>Un conjunto cerrado de fases, con reglas para pasar de una a otra.</dd>
+<dt>Estado local</dt>
+<dd>Un dato que solo importa a una máquina y no se sincroniza.</dd>
+<dt>Remitente</dt>
+<dd>El cliente que envió un RPC. El servidor lo lee de los parámetros del mensaje.</dd>
+</dl>
+</div><p>En el laboratorio tu juego gana una partida: esperar a los dos jugadores, cuenta
+atrás, carrera con tiempo y final.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html" target="_blank" rel="noopener">NetworkVariable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc-params.html" target="_blank" rel="noopener">RPC params</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/scenemanagement/inscene-placed-networkobjects.html" target="_blank" rel="noopener">In-scene placed NetworkObjects</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/serialization/enum-types.html" target="_blank" rel="noopener">Enum types</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M04/02-el-volante-y-los-choques.html">
+      <span class="direccion">← Anterior</span>
+      El volante y los choques
+    </a>
+    <a class="siguiente" href="../M05/02-la-carrera.html">
+      <span class="direccion">Siguiente →</span>
+      La carrera
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Curso de multijugador · Multijugador en Unity</title>
+  <link rel="stylesheet" href="estilos/design-system.css">
+  <link rel="stylesheet" href="estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main>
+  <div class="hoja" style="padding-bottom: 24px;">
+    <h1 class="leccion-titulo">Multijugador en Unity, del vídeo a tu juego</h1>
+    <p class="leccion-resumen">
+      Ruta de estudio que sigue el curso de Code Monkey sobre Netcode for
+      GameObjects, capítulo a capítulo, y aplica cada concepto en el juego de
+      vehículos con la versión que tienes instalada.
+    </p>
+  </div>
+
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 0</span>
+      <h2>Punto de partida</h2>
+      <p>Qué es un juego en red por dentro y cómo probar dos jugadores en tu máquina.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=0s" target="_blank" rel="noopener">Vídeo 00:00:00 – 00:22:37</a>
+        <span>En tu juego: Dos jugadores en Multiplayer Play Mode y lectura de tu VehicleOwnership.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M00/01-como-funciona-un-juego-en-red.html">
+        <img class="ficha-portada" src="M00/01-como-funciona-un-juego-en-red.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 0.1</span>
+        <h3>Cómo funciona un juego en red por dentro</h3>
+        <p>Qué hay realmente en cada máquina cuando dos personas juegan juntas, y quién decide qué es verdad. Sin esto, el resto del curso son componentes que marcas sin saber por qué.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~20 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M00/02-dos-jugadores-en-tu-maquina.html">
+        <img class="ficha-portada" src="M00/02-dos-jugadores-en-tu-maquina.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 0.2</span>
+        <h3>Dos jugadores en tu máquina</h3>
+        <p>Montar el banco de pruebas del curso: anfitrión y cliente a la vez, en tu ordenador, para mirar cada cambio desde los dos lados.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~30 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 1</span>
+      <h2>Conexión y autoridad</h2>
+      <p>NetworkManager, NetworkObject y quién manda sobre el movimiento, servidor o cliente.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=1357s" target="_blank" rel="noopener">Vídeo 00:22:37 – 00:59:11</a>
+        <span>En tu juego: Cambiar la autoridad del movimiento y observar qué se rompe.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M01/01-conexion-y-autoridad.html">
+        <img class="ficha-portada" src="M01/01-conexion-y-autoridad.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 1.1</span>
+        <h3>Conexión y autoridad: quién mueve el coche</h3>
+        <p>La decisión que más pesa en un juego en red: si el movimiento lo decide el servidor o el dueño del objeto. Qué gana y qué pierde cada opción.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~25 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M01/02-quien-mueve-el-coche.html">
+        <img class="ficha-portada" src="M01/02-quien-mueve-el-coche.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 1.2</span>
+        <h3>Quién mueve el coche</h3>
+        <p>Cambiar la autoridad del movimiento de tu coche, ver al cliente quedarse clavado, y dejarlo como estaba sabiendo por qué.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~35 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 2</span>
+      <h2>RPC y lógica de servidor</h2>
+      <p>Mensajes entre máquinas y código que solo debe correr en una.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=3551s" target="_blank" rel="noopener">Vídeo 00:59:11 – 01:20:20</a>
+        <span>En tu juego: Claxon por RPC y tráfico generado solo en el servidor.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M02/01-rpc-y-logica-de-servidor.html">
+        <img class="ficha-portada" src="M02/01-rpc-y-logica-de-servidor.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 2.1</span>
+        <h3>RPC y lógica de servidor</h3>
+        <p>Cómo se le dice algo a otra máquina, y cómo se consigue que un trozo de código corra en una sola. Las dos herramientas con las que el vídeo sincroniza casi todo el juego.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~25 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M02/02-el-claxon-y-el-trafico.html">
+        <img class="ficha-portada" src="M02/02-el-claxon-y-el-trafico.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 2.2</span>
+        <h3>El claxon y el tráfico</h3>
+        <p>Tu primer RPC, de ida y vuelta, y la primera lógica que solo corre en el servidor. Termina con el tráfico visible solo para el anfitrión, a propósito.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~60 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 3</span>
+      <h2>Objetos en red</h2>
+      <p>Hacer aparecer, desaparecer y emparentar objetos que todos ven.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=4820s" target="_blank" rel="noopener">Vídeo 01:20:20 – 02:01:20</a>
+        <span>En tu juego: Tráfico o carga como objetos de red.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M03/01-objetos-en-red.html">
+        <img class="ficha-portada" src="M03/01-objetos-en-red.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 3.1</span>
+        <h3>Objetos en red: aparecer, desaparecer, emparentar</h3>
+        <p>Cómo se crea algo que todos ven, quién puede hacerlo, cómo se refiere una máquina a un objeto de otra, y por qué emparentar objetos de red tiene reglas propias.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~30 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M03/02-trafico-en-red.html">
+        <img class="ficha-portada" src="M03/02-trafico-en-red.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 3.2</span>
+        <h3>Tráfico en red</h3>
+        <p>Convertir los camiones en objetos de red para que el cliente vea el mismo tráfico que el anfitrión, con el servidor conduciéndolos.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~75 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 4</span>
+      <h2>Estado continuo</h2>
+      <p>NetworkVariable frente a RPC, y colisiones entre jugadores.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=7280s" target="_blank" rel="noopener">Vídeo 02:01:20 – 02:45:04</a>
+        <span>En tu juego: La dirección de las ruedas (issue 16) y choques entre coches.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M04/01-estado-continuo-networkvariable.html">
+        <img class="ficha-portada" src="M04/01-estado-continuo-networkvariable.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 4.1</span>
+        <h3>Estado continuo: NetworkVariable frente a RPC</h3>
+        <p>La segunda forma de cruzar la red: un valor compartido en vez de un aviso. Cuándo conviene cada una, y qué pasa cuando dos jugadores con autoridad propia chocan.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~30 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M04/02-el-volante-y-los-choques.html">
+        <img class="ficha-portada" src="M04/02-el-volante-y-los-choques.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 4.2</span>
+        <h3>El volante y los choques</h3>
+        <p>Cerrar tu issue 16: las ruedas delanteras giran en todas las copias gracias a una NetworkVariable que escribe el dueño. Y un experimento con dos coches chocando.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~70 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 5</span>
+      <h2>Estado de partida y pausa</h2>
+      <p>Una máquina de estados compartida y una pausa que respeta a todos.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=9904s" target="_blank" rel="noopener">Vídeo 02:45:04 – 03:11:16</a>
+        <span>En tu juego: Espera, cuenta atrás, carrera y fin.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M05/01-estado-de-partida-y-pausa.html">
+        <img class="ficha-portada" src="M05/01-estado-de-partida-y-pausa.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 5.1</span>
+        <h3>Estado de partida y pausa</h3>
+        <p>Una máquina de estados que comparten todos: esperar a que estén listos, cuenta atrás, jugar y terminar. Y qué significa pausar cuando hay más de un jugador.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~25 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M05/02-la-carrera.html">
+        <img class="ficha-portada" src="M05/02-la-carrera.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 5.2</span>
+        <h3>La carrera</h3>
+        <p>Darle una partida a tu juego: nadie arranca hasta que los dos estén listos, hay una cuenta atrás, se corre contra el reloj y se acaba para todos a la vez.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~90 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 6</span>
+      <h2>Desconexiones y entradas tardías</h2>
+      <p>Qué pasa cuando alguien se cae o llega con la partida empezada.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=11476s" target="_blank" rel="noopener">Vídeo 03:11:16 – 03:29:44</a>
+        <span>En tu juego: Caída del anfitrión y límite de jugadores.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M06/01-desconexiones-y-entradas-tardias.html">
+        <img class="ficha-portada" src="M06/01-desconexiones-y-entradas-tardias.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 6.1</span>
+        <h3>Desconexiones y entradas tardías</h3>
+        <p>Lo que distingue un prototipo de un juego: qué pasa cuando alguien se cae a mitad, cuando se cae el anfitrión, y cuando alguien intenta entrar con la partida empezada.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~25 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M06/02-caidas-y-aforo.html">
+        <img class="ficha-portada" src="M06/02-caidas-y-aforo.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 6.2</span>
+        <h3>Caídas y aforo</h3>
+        <p>Provocar las tres situaciones incómodas en tu juego, mirar qué pasa de verdad, y decidir qué hace en cada una: se va un cliente, se va el anfitrión, y alguien llega tarde.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~60 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 7</span>
+      <h2>Flujo de escenas y selección</h2>
+      <p>Cambiar de escena en red y elegir personaje antes de jugar.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=12584s" target="_blank" rel="noopener">Vídeo 03:29:44 – 04:37:34</a>
+        <span>En tu juego: Menú, selección de vehículo y juego.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M07/01-escenas-y-seleccion.html">
+        <img class="ficha-portada" src="M07/01-escenas-y-seleccion.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 7.1</span>
+        <h3>Flujo de escenas y selección de personaje</h3>
+        <p>Cómo se cambia de escena cuando hay varias máquinas, qué objetos sobreviven al cambio, y cómo se guarda una lista de jugadores con sus elecciones que todos ven.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~35 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M07/02-menu-seleccion-y-juego.html">
+        <img class="ficha-portada" src="M07/02-menu-seleccion-y-juego.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 7.2</span>
+        <h3>Menú, selección de vehículo y juego</h3>
+        <p>Partir tu única escena en tres, mover a todos los jugadores de una a otra, y dejar que cada uno elija con qué vehículo corre.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~150 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 8</span>
+      <h2>Jugar por internet</h2>
+      <p>Encontrarse y conectarse fuera de la red local.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=16654s" target="_blank" rel="noopener">Vídeo 04:37:34 – 05:55:09</a>
+        <span>En tu juego: Sesiones con código a través de Relay.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M08/01-jugar-por-internet.html">
+        <img class="ficha-portada" src="M08/01-jugar-por-internet.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 8.1</span>
+        <h3>Jugar por internet: encontrarse y conectarse</h3>
+        <p>Dos problemas distintos que suelen confundirse: cómo descubre un jugador que existe una partida, y cómo llegan los datos de una casa a otra sin abrir puertos.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~35 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M08/02-sesiones-con-codigo.html">
+        <img class="ficha-portada" src="M08/02-sesiones-con-codigo.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 8.2</span>
+        <h3>Sesiones con código</h3>
+        <p>Abrir la caja negra de los botones de sesión: crear y unirte a una partida con tu propio código, mostrar el código de acceso y jugar desde dos ordenadores de verdad.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~90 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+  <section class="modulo ">
+    <header class="modulo-cabecera">
+      <span class="ficha-modulo">Módulo 9</span>
+      <h2>Depurar y cerrar</h2>
+      <p>Simular mala red, medir, y dejar la opción de un jugador.</p>
+      <p class="modulo-datos">
+        <a href="https://www.youtube.com/watch?v=7glCsF9fv3s&t=21309s" target="_blank" rel="noopener">Vídeo 05:55:09 – 06:20:02</a>
+        <span>En tu juego: Latencia simulada, opción de un jugador y checkpoint final.</span>
+      </p>
+    </header>
+
+    <div class="rejilla">
+      <a class="ficha" href="M09/01-depurar-y-cerrar.html">
+        <img class="ficha-portada" src="M09/01-depurar-y-cerrar.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 9.1</span>
+        <h3>Depurar y cerrar: mala red, medidas y un jugador</h3>
+        <p>Tu juego funciona porque lo has probado en la mejor red posible: tu propio ordenador. Cómo estropearla a propósito, qué medir, y por qué conviene poder jugar sin red.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">concepto</span>
+          <span class="pildora pildora-duracion">~25 min</span>
+        </div>
+      </a>
+      <a class="ficha" href="M09/02-mala-red-y-un-jugador.html">
+        <img class="ficha-portada" src="M09/02-mala-red-y-un-jugador.svg" alt="" loading="lazy">
+        <span class="ficha-modulo">Lección 9.2</span>
+        <h3>Mala red y un jugador</h3>
+        <p>El examen final de tu juego: ponerle una conexión mala, repetir los experimentos de todo el curso, medir lo que envía y dejarlo jugable sin red.</p>
+        <div class="ficha-pie">
+          <span class="pildora pildora-tipo">lab</span>
+          <span class="pildora pildora-duracion">~90 min</span>
+        </div>
+      </a>
+    </div>
+  </section>
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

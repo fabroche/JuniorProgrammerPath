@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tráfico en red · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 3 · Objetos en red · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~75 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Tráfico en red</h1>
+  <p class="leccion-resumen">Convertir los camiones en objetos de red para que el cliente vea el mismo tráfico que el anfitrión, con el servidor conduciéndolos.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Preparar un prefab para existir en red y registrarlo</li>
+      <li>Publicar un objeto desde el servidor con Spawn</li>
+      <li>Decidir en qué máquina corre el controlador de un objeto que no es de ningún jugador</li>
+      <li>Entender qué le pasa a tu pool cuando sus objetos son de red</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Partes de donde quedó el laboratorio 2.2: el servidor genera tráfico y el
+cliente conduce por una carretera vacía. Aquí el cliente vuelve a ver camiones,
+y esta vez son los mismos que ve el anfitrión.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El laboratorio 2.2 terminado: el tráfico solo existe en el anfitrión</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 3.1 leída</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Un commit limpio antes de empezar</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Frenar el generador antes de ponerlo en red</h3><p>Tu generador llama a <code>GetPooledObject()</code> en <strong>cada</strong> <code>FixedUpdate</code>. Antes de
+seguir, haz que saque un camión cada cierto tiempo: un temporizador que acumule
+<code>Time.fixedDeltaTime</code> y solo actúe al superar un intervalo.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Sin red, sacar un objeto del pool cada 0,02 s es un derroche local. En red cada
+camión es un mensaje de creación a cada cliente y un <code>NetworkTransform</code> enviando
+30 veces por segundo. Es el mismo temporizador que usa el mostrador de platos
+del vídeo, y por el mismo motivo.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>En el anfitrión sale un camión cada intervalo, no un chorro continuo. El cliente
+sigue sin ver ninguno.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Preparar el prefab del camión</h3><p>En el prefab que usa el pool, añade:</p>
+<ul>
+<li>Un <strong>NetworkObject</strong>.</li>
+<li>Un <strong>NetworkTransform</strong> con <code>Authority Mode</code> en <strong>Server</strong>.</li>
+</ul>
+<p>Regístralo en <code>Assets/DefaultNetworkPrefabs.asset</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El camión no es de ningún jugador: lo conduce el juego. Su dueño natural es el
+servidor, así que aquí la autoridad correcta es la contraria a la de tu coche.
+Y sin registro, el cliente recibiría la orden de crear «el prefab número tal» y
+no sabría cuál es.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El prefab tiene los dos componentes y aparece en la lista de prefabs de red.
+Nada cambia todavía en el juego.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Publicar cada camión</h3><p>En el generador, justo después de sacar un camión del pool, publícalo:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">PooledObject</span><span class="w"> </span><span class="n">camion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">GetPooledObject</span><span class="p">();</span>
+<span class="n">camion</span><span class="p">.</span><span class="n">GetComponent</span><span class="o">&lt;</span><span class="n">NetworkObject</span><span class="o">&gt;</span><span class="p">().</span><span class="n">Spawn</span><span class="p">();</span>
+</code></pre>
+<p>La guarda de servidor del laboratorio 2.2 sigue encima de estas líneas.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Sacarlo del pool lo activa en el servidor. <code>Spawn()</code> es lo que hace que exista
+en los clientes. Solo el servidor puede llamarlo, y la guarda ya garantiza que
+estás en él.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El cliente vuelve a ver camiones. En la Hierarchy del editor cada camión activo
+tiene un identificador de red.</p>
+<p>Mira con atención cómo se mueven en la ventana del cliente antes de pasar al
+siguiente paso.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Que el camión solo se conduzca en el servidor</h3><p><code>PooledCarWithWheelsController</code> acelera siempre de frente, en todas las copias.
+Haz que solo esté activo en el servidor. Tienes el patrón en tu propio
+<code>VehicleOwnership</code>: un <code>NetworkBehaviour</code> pequeño que, en <code>OnNetworkSpawn</code>,
+activa el controlador según una condición.</p>
+<p>Aquí la condición no es <code>IsOwner</code>. Piensa cuál es.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>En el cliente, el controlador local empuja el camión hacia delante y el
+<code>NetworkTransform</code> lo recoloca donde dice el servidor: dos fuentes mandando
+sobre el mismo transform. Es el cliente del laboratorio 1.2 pulsando teclas sin
+autoridad, solo que aquí el que pulsa es la IA.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>La condición es <code>IsServer</code>. Con el controlador apagado en el cliente, los
+camiones se mueven allí solo por lo que llega de la red, sin tirones.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Entender qué pasa con el pool</h3><p>Lee <code>ObjectPool.SetupPool()</code> y responde en tus notas:</p>
+<ol>
+<li><code>SetupPool</code> corre en <code>Start</code>, en <strong>todas</strong> las máquinas, antes de que exista
+la sesión. ¿Qué crea en el cliente? ¿Lo usa alguien?</li>
+<li>Cuando el servidor publica un camión, ¿el cliente reutiliza uno de los suyos
+o crea otro nuevo?</li>
+<li>Cuando un camión vuelva al pool, ¿qué hay que llamar para que desaparezca de
+los clientes sin destruirlo en el servidor?</li>
+</ol>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Tu pool ahorra instanciar, pero solo en la máquina que lo usa. En red, el
+servidor reutiliza sus instancias y cada cliente sigue creando y destruyendo las
+suyas, salvo que se lo enseñes. Saberlo evita creer que el pool está haciendo
+algo que no hace.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><ol>
+<li>Crea camiones inactivos que nadie usará nunca: en el cliente el generador no
+pasa de la guarda. Son inofensivos y sobran.</li>
+<li>Crea uno nuevo. Netcode instancia el prefab al recibir la orden.</li>
+<li><code>Despawn(false)</code>: lo retira de la red y lo deja vivo en el servidor para
+devolverlo al pool. En los clientes se destruye.</li>
+</ol>
+<p>El pool en los clientes se resuelve con un manejador de instancias de prefab,
+descrito en la página «Object pooling» de las fuentes. Queda fuera de este
+laboratorio.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El cliente ve camiones, y son los mismos que ve el anfitrión</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Los camiones se mueven sin tirones en la ventana del cliente</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El controlador del camión está desactivado en las copias del cliente</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Sé qué hace y qué no hace mi pool cuando hay red</li>
+</ul>
+</div><details class="problema"><summary>Error al publicar: el prefab no está registrado</summary><div class="desplegable-cuerpo"><p>El mensaje de Netcode nombra el prefab. Añádelo a <code>DefaultNetworkPrefabs</code>. Si ya
+está, comprueba que el pool instancia ese prefab y no una variante.</p>
+</div></details><details class="problema"><summary>Error: solo el servidor puede hacer Spawn</summary><div class="desplegable-cuerpo"><p>La llamada a <code>Spawn()</code> se está ejecutando en un cliente. La guarda de servidor
+tiene que estar antes, en el mismo método.</p>
+</div></details><details class="problema"><summary>Los camiones aparecen en el cliente pero no se mueven</summary><div class="desplegable-cuerpo"><p>Falta el <code>NetworkTransform</code> en el prefab, o su autoridad está en Owner. El dueño
+de un objeto publicado con <code>Spawn()</code> es el servidor, así que con Owner también
+debería moverse; si no lo hace, revisa que el controlador siga activo en el
+servidor.</p>
+</div></details><div class="aviso aviso-nota"><span class="aviso-etiqueta">Nota</span><p>Tus issues 12 y 13, sobre el estado al reciclar y los camiones que nunca vuelven
+al pool, siguen abiertos y ahora tienen una condición más: devolver un camión es
+también retirarlo de la red.</p>
+</div>
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/object-spawning.html" target="_blank" rel="noopener">Object spawning</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/helper/networktransform.html" target="_blank" rel="noopener">NetworkTransform</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/object-pooling.html" target="_blank" rel="noopener">Object pooling</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M03/01-objetos-en-red.html">
+      <span class="direccion">← Anterior</span>
+      Objetos en red: aparecer, desaparecer, emparentar
+    </a>
+    <a class="siguiente" href="../M04/01-estado-continuo-networkvariable.html">
+      <span class="direccion">Siguiente →</span>
+      Estado continuo: NetworkVariable frente a RPC
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

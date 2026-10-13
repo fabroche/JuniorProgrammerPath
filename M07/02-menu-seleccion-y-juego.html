@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Menú, selección de vehículo y juego · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 7 · Flujo de escenas y selección · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~150 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Menú, selección de vehículo y juego</h1>
+  <p class="leccion-resumen">Partir tu única escena en tres, mover a todos los jugadores de una a otra, y dejar que cada uno elija con qué vehículo corre.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Separar la conexión, la selección y la partida en tres escenas</li>
+      <li>Cargar una escena para todos desde el servidor</li>
+      <li>Sincronizar la elección de cada jugador con una NetworkList</li>
+      <li>Crear el vehículo de cada jugador a mano según lo que eligió</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Es el laboratorio más grande del curso, como sus dos capítulos son los más
+largos del vídeo hasta aquí. Reorganiza el proyecto: hazlo en una rama, y haz
+commit al final de cada paso. Cada uno deja el juego en un estado que funciona.</p>
+<p>Tienes dos prefabs de vehículo de red, <code>Vehicle_NetworkObject</code> y
+<code>Tank_NetworkObject</code>. Hasta ahora solo se usa uno. Aquí el jugador elige.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Los laboratorios de los módulos 5 y 6 terminados</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 7.1 leída</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Una rama nueva para este laboratorio</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Tres escenas</h3><p>Crea dos escenas nuevas y reparte lo que hoy está junto en <code>Prototype 1</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Escena</th>
+<th>Qué contiene</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Menu</code></td>
+<td>El NetworkManager y los botones de sesión</td>
+</tr>
+<tr>
+<td><code>Seleccion</code></td>
+<td>La pantalla para elegir vehículo</td>
+</tr>
+<tr>
+<td><code>Prototype 1</code></td>
+<td>La carretera, el tráfico y el <code>RaceManager</code></td>
+</tr>
+</tbody>
+</table>
+<p>Añade las tres a la lista de escenas del build, con <code>Menu</code> la primera.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El NetworkManager tiene que estar en la primera escena, porque es la que
+conecta, y sobrevive a los cambios porque se marca a sí mismo para no
+destruirse. Y Netcode solo sabe cargar por red escenas que estén en la lista del
+build.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Al entrar en Play desde <code>Menu</code> puedes crear y unirte a una sesión. Todavía no
+hay forma de salir de esa escena.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Llevar a todos a la selección</h3><p>Cuando el anfitrión cree la sesión, cárgale a todo el mundo la escena
+<code>Seleccion</code>:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">NetworkManager</span><span class="p">.</span><span class="n">Singleton</span><span class="p">.</span><span class="n">SceneManager</span><span class="p">.</span><span class="n">LoadScene</span><span class="p">(</span><span class="s">&quot;Seleccion&quot;</span><span class="p">,</span><span class="w"> </span><span class="n">LoadSceneMode</span><span class="p">.</span><span class="n">Single</span><span class="p">);</span>
+</code></pre>
+<p>Engánchalo a <code>NetworkManager.OnServerStarted</code>, que avisa cuando esta máquina ha
+arrancado como servidor.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Si usaras el <code>SceneManager</code> de Unity, el anfitrión cambiaría de escena él solo.
+El de la red se lo ordena a todos, y a quien se una después lo lleva
+directamente a la escena en la que esté el servidor.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El anfitrión crea la sesión y pasa a <code>Seleccion</code>. El cliente se une desde su
+<code>Menu</code> y aparece en <code>Seleccion</code> sin pulsar nada más.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Que no nazca ningún coche todavía</h3><p>Quita el prefab del campo <code>PlayerPrefab</code> del NetworkManager.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Mientras esté, el NetworkManager crea un coche en cuanto alguien se conecta, en
+la escena de selección, donde no hay carretera. A partir de ahora los vehículos
+los creas tú, cuando toque y del tipo que toque.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Dos jugadores en <code>Seleccion</code> y ningún vehículo en la escena.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Guardar quién ha elegido qué</h3><p>Crea un <code>NetworkBehaviour</code> que viva toda la sesión, con una <code>NetworkList</code> de una
+estructura como esta:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">public</span><span class="w"> </span><span class="k">struct</span><span class="w"> </span><span class="nc">PlayerData</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">IEquatable</span><span class="o">&lt;</span><span class="n">PlayerData</span><span class="o">&gt;</span><span class="p">,</span><span class="w"> </span><span class="n">INetworkSerializable</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">ulong</span><span class="w"> </span><span class="n">clientId</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">int</span><span class="w"> </span><span class="n">vehicleId</span><span class="p">;</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="kt">bool</span><span class="w"> </span><span class="n">ready</span><span class="p">;</span>
+<span class="w">    </span><span class="c1">// Equals y NetworkSerialize, como en la lección 7.1</span>
+<span class="p">}</span>
+</code></pre>
+<p>El servidor añade una entrada al conectarse alguien y la quita al irse, con el
+registro de conexiones que hiciste en el laboratorio 6.2.</p>
+<p>Decide dónde vive este objeto para que sobreviva a los cambios de escena, y
+ponle un <code>NetworkObject</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>La elección de cada jugador la tienen que <strong>ver todos</strong> para dibujarla, y tiene
+que seguir existiendo cuando se cargue la partida. Lo primero pide una lista
+sincronizada en vez de un diccionario del servidor. Lo segundo, un objeto que no
+se destruya con la escena.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Con un log en <code>OnListChanged</code>: al unirse el segundo jugador, las <strong>dos</strong>
+consolas informan de dos entradas.</p>
+<p>El vídeo coloca un objeto equivalente en la escena y lo marca para no
+destruirse. Comprueba que el tuyo sigue teniendo identificador de red tras el
+primer cambio de escena, que es donde este diseño suele fallar.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Elegir vehículo</h3><p>En <code>Seleccion</code>, dos botones: coche y tanque. Al pulsar uno, el cliente pide el
+cambio con un RPC al servidor; el servidor localiza la entrada del remitente y
+cambia su <code>vehicleId</code>.</p>
+<p>Recuerda el aviso de la lección 7.1: lee la entrada, modifica la copia, y
+<strong>vuelve a asignarla</strong> en su posición.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es el patrón de ida y vuelta del módulo 2, pero la vuelta no es un RPC: es la
+propia lista, que se sincroniza sola. El cliente no escribe en la lista porque
+no tiene permiso, y no debe tenerlo: el servidor es quien valida.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Cada jugador ve en pantalla su elección y la del otro, y cambian en las dos
+ventanas al pulsar cualquiera de los dos.</p>
+<p>Si cambia en la ventana de quien pulsa pero no en la otra, has modificado la
+copia sin reasignarla.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Listos, y a la carretera</h3><p>Añade el botón «listo», que marca <code>ready</code> por el mismo camino. Cuando todas las
+entradas estén listas, el servidor carga <code>Prototype 1</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es el «estoy listo» del módulo 5, guardado ahora en la lista en vez de en un
+diccionario porque aquí los demás sí necesitan verlo. La comprobación de «están
+todos» sigue siendo cosa del servidor.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Cuando los dos pulsan «listo», los dos pasan a <code>Prototype 1</code>. No hay vehículos
+todavía.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Crear el vehículo de cada uno</h3><p>En <code>Prototype 1</code>, cuando todos hayan cargado, el servidor crea un vehículo por
+jugador según su <code>vehicleId</code> y se lo entrega:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">NetworkManager</span><span class="p">.</span><span class="n">Singleton</span><span class="p">.</span><span class="n">SceneManager</span><span class="p">.</span><span class="n">OnLoadEventCompleted</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">AlCargarTodos</span><span class="p">;</span>
+
+<span class="c1">// dentro, por cada cliente conectado:</span>
+<span class="n">GameObject</span><span class="w"> </span><span class="n">vehiculo</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">Instantiate</span><span class="p">(</span><span class="n">prefabs</span><span class="p">[</span><span class="n">datos</span><span class="p">.</span><span class="n">vehicleId</span><span class="p">],</span><span class="w"> </span><span class="n">puntoDeSalida</span><span class="p">.</span><span class="n">position</span><span class="p">,</span><span class="w"> </span><span class="n">puntoDeSalida</span><span class="p">.</span><span class="n">rotation</span><span class="p">);</span>
+<span class="n">vehiculo</span><span class="p">.</span><span class="n">GetComponent</span><span class="o">&lt;</span><span class="n">NetworkObject</span><span class="o">&gt;</span><span class="p">().</span><span class="n">SpawnAsPlayerObject</span><span class="p">(</span><span class="n">datos</span><span class="p">.</span><span class="n">clientId</span><span class="p">,</span><span class="w"> </span><span class="k">true</span><span class="p">);</span>
+</code></pre>
+<p>Tu escena ya tiene <code>Spawn_A</code> y <code>Spawn_B</code>: usa uno por jugador.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es lo que antes hacía el NetworkManager a ciegas. Ahora lo haces tú, en el
+momento correcto y sabiendo qué eligió cada uno. Se espera a
+<code>OnLoadEventCompleted</code> porque antes hay clientes que aún no están en la escena.
+Y de paso se resuelve que los dos nazcan en el mismo punto.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Cada jugador aparece con el vehículo que eligió, en su punto de salida, y la
+cámara de cada ventana sigue al suyo. La carrera del módulo 5 funciona encima.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Volver al menú sin dejar restos</h3><p>Al terminar la carrera, un botón para volver a <code>Menu</code>. Antes de cargarla, cierra
+la conexión y sal de la sesión. En <code>Menu</code>, destruye el objeto de la lista de
+jugadores si sigue vivo.</p>
+<p>Después juega <strong>dos partidas seguidas</strong> sin salir de Play.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Los objetos marcados para no destruirse siguen ahí al volver. La segunda partida
+los encuentra duplicados, y los fallos que eso produce no señalan a su causa. El
+vídeo le dedica un script solo a esta limpieza.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>La segunda partida se comporta exactamente como la primera: una entrada por
+jugador en la lista, un vehículo por jugador, un solo NetworkManager en la
+Hierarchy.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El cliente llega a la selección sin hacer nada más que unirse</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Cada jugador ve la elección del otro cambiar en directo</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Cada uno corre con el vehículo que eligió y nace en su punto de salida</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Dos partidas seguidas funcionan igual</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> No queda ningún <code>PlayerPrefab</code> en el NetworkManager</li>
+</ul>
+</div><details class="problema"><summary>La escena no se carga y sale un aviso sobre la lista de escenas</summary><div class="desplegable-cuerpo"><p>La escena no está en la lista del build, o el nombre no coincide exactamente.</p>
+</div></details><details class="problema"><summary>El cliente se queda en el menú mientras el anfitrión cambia</summary><div class="desplegable-cuerpo"><p>La carga se está haciendo con el <code>SceneManager</code> de Unity en vez de con
+<code>NetworkManager.Singleton.SceneManager</code>, o la gestión de escenas está
+desactivada en el NetworkManager.</p>
+</div></details><details class="problema"><summary>La lista de jugadores está vacía en el cliente</summary><div class="desplegable-cuerpo"><p>La lista se está creando en <code>OnNetworkSpawn</code>. Tiene que crearse en la
+declaración o en <code>Awake</code>.</p>
+</div></details><details class="problema"><summary>En la segunda partida hay jugadores repetidos en la lista</summary><div class="desplegable-cuerpo"><p>El objeto que guarda la lista sobrevivió a la vuelta al menú y no se limpió.</p>
+</div></details><details class="problema"><summary>La cámara no sigue al vehículo</summary><div class="desplegable-cuerpo"><p><code>VehicleOwnership</code> busca la cámara al aparecer el vehículo. Comprueba que la
+cámara está en <code>Prototype 1</code> y que el vehículo se crea después de cargarla.</p>
+</div></details>
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/scenemanagement/using-networkscenemanager.html" target="_blank" rel="noopener">Using NetworkSceneManager</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/scenemanagement/scene-events.html" target="_blank" rel="noopener">Scene events</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/serialization/inetworkserializable.html" target="_blank" rel="noopener">INetworkSerializable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/playerobjects.html" target="_blank" rel="noopener">Player objects</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M07/01-escenas-y-seleccion.html">
+      <span class="direccion">← Anterior</span>
+      Flujo de escenas y selección de personaje
+    </a>
+    <a class="siguiente" href="../M08/01-jugar-por-internet.html">
+      <span class="direccion">Siguiente →</span>
+      Jugar por internet: encontrarse y conectarse
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

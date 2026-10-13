@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sesiones con código · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 8 · Jugar por internet · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~90 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Sesiones con código</h1>
+  <p class="leccion-resumen">Abrir la caja negra de los botones de sesión: crear y unirte a una partida con tu propio código, mostrar el código de acceso y jugar desde dos ordenadores de verdad.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Leer cómo están configurados los botones de sesión que ya usas</li>
+      <li>Inicializar los servicios e iniciar sesión por código</li>
+      <li>Crear una sesión por relé y unirte a ella con su código</li>
+      <li>Probar la partida entre dos máquinas distintas</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Los botones de tu escena ya te conectan por internet. Este laboratorio no añade
+una capacidad nueva: sustituye algo que funciona sin que sepas cómo por algo que
+has escrito tú. Hazlo en una rama, y conserva los botones originales hasta el
+final para poder comparar.</p>
+<div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>De todo el curso, este es el laboratorio con más riesgo de no coincidir con lo
+que veas. Los nombres de métodos que aparecen están comprobados contra el
+paquete instalado, pero no las propiedades de cada objeto ni el comportamiento.
+Apóyate en el autocompletado del editor y en la documentación de las fuentes, y
+apunta cada diferencia.</p>
+</div><div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El proyecto enlazado en <strong>Edit → Project Settings → Services</strong></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 8.1 leída</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Una rama nueva para este laboratorio</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Leer lo que ya tienes</h3><p>Abre <code>Assets/DefaultWidgetConfiguration.asset</code> en el Inspector y anota el tipo
+de conexión y el número máximo de jugadores. Después selecciona en la escena los
+objetos <strong>Create Session</strong>, <strong>Session List</strong> y <strong>Leave Session</strong> y mira qué
+componentes llevan.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Antes de sustituir algo conviene saber qué hace. Esos tres objetos son todo tu
+código de conexión, y no lo escribiste tú.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Tipo de conexión por relé y cuatro jugadores. En el fichero son
+<code>ConnectionType: 2</code> y <code>MaxPlayers: 4</code>.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Inicializar e iniciar sesión</h3><p>Crea un script de conexión propio. Su primer método, asíncrono, tiene que
+inicializar los servicios e iniciar sesión de forma anónima si no lo está ya.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">await</span><span class="w"> </span><span class="n">UnityServices</span><span class="p">.</span><span class="n">InitializeAsync</span><span class="p">();</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">AuthenticationService</span><span class="p">.</span><span class="n">Instance</span><span class="p">.</span><span class="n">IsSignedIn</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="n">AuthenticationService</span><span class="p">.</span><span class="n">Instance</span><span class="p">.</span><span class="n">SignInAnonymouslyAsync</span><span class="p">();</span>
+<span class="p">}</span>
+<span class="n">Debug</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="s">$&quot;Identidad: {AuthenticationService.Instance.PlayerId}&quot;</span><span class="p">);</span>
+</code></pre>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Ningún servicio responde a un jugador sin identidad. Los botones ya hechos lo
+hacían por ti. El log sirve para el paso siguiente.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Una línea de identidad en la consola de cada jugador.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Comprobar que sois dos</h3><p>Compara la identidad que imprime el editor con la de Player 2.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>La identidad anónima se guarda por dispositivo. Dos copias del juego en el mismo
+ordenador pueden acabar siendo el mismo jugador para el servicio, y entonces la
+segunda no se une: ya está dentro. Es el problema de los perfiles que resuelve
+el autor al principio de su capítulo.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Dos identidades distintas. Si son iguales, mira el desplegable de problemas del
+final antes de seguir.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Crear la sesión</h3><p>Añade un método que cree una sesión por relé, y enséñale al jugador su código.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="kt">var</span><span class="w"> </span><span class="n">opciones</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">SessionOptions</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="n">MaxPlayers</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="p">}.</span><span class="n">WithRelayNetwork</span><span class="p">();</span>
+<span class="n">IHostSession</span><span class="w"> </span><span class="n">sesion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">MultiplayerService</span><span class="p">.</span><span class="n">Instance</span><span class="p">.</span><span class="n">CreateSessionAsync</span><span class="p">(</span><span class="n">opciones</span><span class="p">);</span>
+</code></pre>
+<p>Busca en <code>sesion</code>, con el autocompletado, la propiedad que contiene el código
+para unirse, y muéstrala en un texto del Canvas.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Esta llamada hace los seis pasos del anfitrión del diagrama de la lección 8.1, y
+además arranca el NetworkManager. Si tenías enganchado algo a
+<code>OnServerStarted</code>, como la carga de la escena de selección, tiene que dispararse
+igual.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>En pantalla aparece un código corto, y la partida arranca como antes: el
+anfitrión pasa a la selección o ve aparecer su coche, según hasta dónde llegaste
+en el módulo 7.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Unirse con el código</h3><p>Añade un campo de texto y un botón. Al pulsarlo, únete con lo que haya escrito.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">ISession</span><span class="w"> </span><span class="n">sesion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="n">MultiplayerService</span><span class="p">.</span><span class="n">Instance</span><span class="p">.</span><span class="n">JoinSessionByCodeAsync</span><span class="p">(</span><span class="n">codigo</span><span class="p">);</span>
+</code></pre>
+<p>Envuelve la llamada en un <code>try</code> y muestra el mensaje del error si falla.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Un código es la forma más simple de encontrarse: no hace falta lista ni
+búsqueda. Y la llamada puede fallar por motivos que el jugador entiende, como un
+código mal escrito o una sesión llena, así que merece un mensaje.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Player 2 escribe el código que muestra el anfitrión y entra. Con un código
+inventado, ve un mensaje de error y sigue en el menú.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Salir bien</h3><p>Guarda la sesión en un campo y añade un botón para salir, que llame al método de
+la sesión para abandonarla. Búscalo con el autocompletado.</p>
+<p>Suscríbete también a los eventos de la sesión que avisan de que has sido
+expulsado y de que la sesión se ha eliminado, y deja un log en cada uno.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la limpieza del módulo 6 vista desde las sesiones. Los eventos de la sesión
+son los que te dicen que el anfitrión ha desaparecido, de forma más directa que
+los del NetworkManager.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Tras salir, puedes crear o unirte a otra sesión sin reiniciar el juego. Si el
+anfitrión se va, el cliente recibe uno de los dos eventos. Apunta cuál.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Dos ordenadores de verdad</h3><p>Haz un build y pásaselo a alguien en otra red, o ábrelo en otro ordenador con
+otra conexión. Uno crea la sesión y le dicta el código al otro.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Todo lo anterior lo has probado en un solo ordenador. Lo que resuelve el relé,
+cruzar dos routers, no se ha puesto a prueba todavía. Y es la primera vez que
+vas a notar latencia de verdad.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Los dos jugadores se ven y corren. El coche del otro va claramente más retrasado
+que en tus pruebas locales, y un choque se ve distinto en cada pantalla, como
+anticipaba el laboratorio 4.2.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Sé qué hacían los botones de sesión que venía usando</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Puedo crear una sesión y ver su código sin los botones ya hechos</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Puedo unirme escribiendo el código, y un código erróneo da un mensaje</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He jugado una partida entre dos ordenadores en redes distintas</li>
+</ul>
+</div><details class="problema"><summary>Los dos jugadores tienen la misma identidad</summary><div class="desplegable-cuerpo"><p>Hay que darle a cada copia un perfil de autenticación distinto antes de iniciar
+sesión. Las opciones de inicialización de los servicios admiten un perfil, y
+Multiplayer Play Mode permite distinguir en qué jugador se está ejecutando el
+código. Consulta las dos páginas de las fuentes: es una interacción entre dos
+paquetes y conviene seguir su documentación actual.</p>
+</div></details><details class="problema"><summary>Error de servicios no inicializados</summary><div class="desplegable-cuerpo"><p>Se está llamando a la autenticación o a las sesiones antes de que termine
+<code>InitializeAsync</code>. Falta un <code>await</code>, o el método que llama no es asíncrono.</p>
+</div></details><details class="problema"><summary>La sesión se crea pero el NetworkManager no arranca</summary><div class="desplegable-cuerpo"><p>Comprueba que las opciones llevan la red por relé. Sin una opción de red, la
+sesión es solo una sala: sirve para encontrarse y no conecta a nadie.</p>
+</div></details><details class="problema"><summary>Error de proyecto no enlazado o servicio no habilitado</summary><div class="desplegable-cuerpo"><p>Enlaza el proyecto en los ajustes de servicios y revisa en el panel de la nube
+de Unity que los servicios multijugador están activados para él.</p>
+</div></details>
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.services.multiplayer@2.3/manual/index.html" target="_blank" rel="noopener">Multiplayer Services SDK 2.3 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.multiplayer.playmode@1.6/manual/index.html" target="_blank" rel="noopener">Multiplayer Play Mode 1.6 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M08/01-jugar-por-internet.html">
+      <span class="direccion">← Anterior</span>
+      Jugar por internet: encontrarse y conectarse
+    </a>
+    <a class="siguiente" href="../M09/01-depurar-y-cerrar.html">
+      <span class="direccion">Siguiente →</span>
+      Depurar y cerrar: mala red, medidas y un jugador
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

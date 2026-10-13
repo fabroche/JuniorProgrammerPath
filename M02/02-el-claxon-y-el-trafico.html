@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>El claxon y el tráfico · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 2 · RPC y lógica de servidor · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~60 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">El claxon y el tráfico</h1>
+  <p class="leccion-resumen">Tu primer RPC, de ida y vuelta, y la primera lógica que solo corre en el servidor. Termina con el tráfico visible solo para el anfitrión, a propósito.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Escribir un RPC hacia el servidor y otro del servidor hacia todos</li>
+      <li>Comprobar en la consola de cada jugador dónde se ejecuta cada método</li>
+      <li>Poner el generador de tráfico bajo una guarda de servidor</li>
+      <li>Ver con tus ojos por qué decidir en el servidor no basta para que los demás lo vean</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Dos partes. La primera es un claxon: pequeño, sin consecuencias, y con el
+recorrido completo de un RPC. La segunda toca el tráfico y deja el juego a
+medias de forma deliberada: el módulo 3 lo termina.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El banco de la lección 0.2 funcionando</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 2.1 leída</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Un commit limpio antes de empezar</li>
+</ul>
+</div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>Tu copia de trabajo tiene <code>CarWithWheelsSpawn.cs</code> modificado sin confirmar: la
+clase se llama <code>c</code> en vez de <code>CarWithWheelsSpawn</code>. Parece una tecla suelta.
+Revísalo antes de empezar la segunda parte, porque el nombre de la clase tiene
+que coincidir con el del fichero para que Unity conserve el componente.</p>
+</div><h2>Primera parte: el claxon</h2>
+<div class="paso"><h3 class="paso-titulo">Crear el script del claxon</h3><p>Crea <code>Assets/Scripts/Multiplayer/VehicleHorn.cs</code>. Tiene que heredar de
+<code>NetworkBehaviour</code> y leer una tecla <strong>solo en la copia del dueño</strong>.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">using</span><span class="w"> </span><span class="nn">Unity.Netcode</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine</span><span class="p">;</span>
+<span class="k">using</span><span class="w"> </span><span class="nn">UnityEngine.InputSystem</span><span class="p">;</span>
+
+<span class="k">namespace</span><span class="w"> </span><span class="nn">Multiplayer</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="k">public</span><span class="w"> </span><span class="k">class</span><span class="w"> </span><span class="nc">VehicleHorn</span><span class="w"> </span><span class="p">:</span><span class="w"> </span><span class="n">NetworkBehaviour</span>
+<span class="w">    </span><span class="p">{</span>
+<span class="w">        </span><span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">Update</span><span class="p">()</span>
+<span class="w">        </span><span class="p">{</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">IsOwner</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">Keyboard</span><span class="p">.</span><span class="n">current</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">null</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">Keyboard</span><span class="p">.</span><span class="n">current</span><span class="p">.</span><span class="n">hKey</span><span class="p">.</span><span class="n">wasPressedThisFrame</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+
+<span class="w">            </span><span class="c1">// aquí va la llamada del paso siguiente</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+<p>Añádelo al prefab <code>Vehicle_NetworkObject</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El <code>Update</code> corre en todas las copias del coche. Sin la guarda de <code>IsOwner</code>,
+pulsar la tecla haría sonar el claxon de todos los coches que hay en tu máquina,
+que es el mismo fallo de los dos jugadores obedeciendo a un teclado.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El proyecto compila. Todavía no pasa nada al pulsar H.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Pedírselo al servidor</h3><p>Escribe un método marcado con <code>[Rpc(SendTo.Server)]</code> que de momento solo deje un
+log, y llámalo desde el <code>Update</code>.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="na">[Rpc(SendTo.Server)]</span>
+<span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">PedirClaxonRpc</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">Debug</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="s">$&quot;[servidor] el coche de {OwnerClientId} pide tocar el claxon&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la mitad de ida del patrón. El cliente no hace sonar nada: se lo pide al
+servidor. Hacerlo en dos pasos te deja ver cada tramo por separado en la
+consola.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Pulsa H en la ventana del <strong>cliente</strong>. El log aparece en la consola del
+<strong>anfitrión</strong>, no en la del cliente.</p>
+<p>Pulsa H en la ventana del anfitrión. El log aparece también en la suya: el
+anfitrión es el servidor, así que el RPC se ejecuta ahí mismo.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Que el servidor avise a todos</h3><p>Escribe el segundo método, con <code>[Rpc(SendTo.ClientsAndHost)]</code>, y llámalo desde
+el primero.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="na">[Rpc(SendTo.ClientsAndHost)]</span>
+<span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">TocarClaxonRpc</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">Debug</span><span class="p">.</span><span class="n">Log</span><span class="p">(</span><span class="s">$&quot;[{NetworkManager.LocalClientId}] suena el claxon del coche de {OwnerClientId}&quot;</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la mitad de vuelta. El servidor es el único que habla con todos, así que el
+aviso sale de él. Fíjate en que el método se ejecuta sobre <strong>la copia de ese
+mismo coche</strong> en cada máquina: por eso <code>OwnerClientId</code> vale lo mismo en todas y
+<code>LocalClientId</code> cambia.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Al pulsar H en cualquiera de las dos ventanas, aparece una línea en <strong>las dos</strong>
+consolas. El número entre corchetes es distinto en cada una; el del coche es el
+mismo.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Darle un efecto que se vea</h3><p>Sustituye el log del segundo método por algo perceptible. Lo más simple, sin
+buscar un sonido: un <code>AudioSource</code> con cualquier clip, o agrandar el coche un
+instante.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Un RPC sirve para avisos de un instante: un sonido, una chispa, una animación de
+golpe. Es exactamente el uso que el vídeo le da a los RPC de «entrega correcta».</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El efecto se ve o se oye en las dos ventanas, sobre el coche correcto en cada
+una.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">El atajo</h3><p>Ahora que has visto los dos tramos, prueba a quitar el método del servidor y
+dejar uno solo con <code>[Rpc(SendTo.Everyone)]</code>, llamado directamente desde el
+<code>Update</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>En tu versión un cliente puede dirigir un RPC a todos; Netcode lo encamina por
+el servidor sin que tú escribas el salto. Es más corto, y pierde algo: el
+servidor ya no tiene ocasión de decir que no. Para un claxon da igual. Para
+«he ganado la carrera» no.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Mismo comportamiento que antes, con un método menos. Decide cuál de las dos
+versiones dejas y apunta por qué.</p>
+</div></div><h2>Segunda parte: el tráfico</h2>
+<div class="paso"><h3 class="paso-titulo">Ver el problema antes de arreglarlo</h3><p>Sin cambiar nada, entra en Play con dos jugadores y mira el tráfico de los
+camiones en las dos ventanas.</p>
+<p>Responde: ¿los camiones de una ventana son los mismos que los de la otra? ¿Qué
+pasaría si su posición o su carril salieran de un <code>Random</code>?</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Tu generador es un <code>MonoBehaviour</code> sin red. Cada máquina ejecuta el suyo, así
+que hay dos tráficos independientes que por casualidad se parecen. Es el
+<code>DeliveryManager</code> del vídeo generando recetas distintas en cada máquina.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Hay camiones en las dos ventanas, pero ninguno es un objeto de red: no tienen
+<code>NetworkObject</code> y no existen fuera de la máquina que los creó. Si chocas con uno
+en tu ventana, en la otra tu coche choca con algo que allí puede no estar.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Que solo genere el servidor</h3><p>En el generador, haz que <code>FixedUpdate</code> no saque camiones salvo que esta máquina
+sea el servidor.</p>
+<p>El generador no es un <code>NetworkBehaviour</code>, así que no tiene <code>IsServer</code>. Puedes
+preguntárselo al <code>NetworkManager</code>:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="n">NetworkManager</span><span class="w"> </span><span class="n">manager</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">NetworkManager</span><span class="p">.</span><span class="n">Singleton</span><span class="p">;</span>
+<span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="n">manager</span><span class="w"> </span><span class="o">==</span><span class="w"> </span><span class="k">null</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="n">manager</span><span class="p">.</span><span class="n">IsServer</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+</code></pre>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la guarda de servidor de la lección 2.1. Lo que crea cosas tiene que pasar en
+un solo sitio. Preguntar al singleton te evita convertir el pool entero en
+<code>NetworkBehaviour</code> solo para saber en qué máquina estás.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><ul>
+<li>En la ventana del anfitrión hay tráfico.</li>
+<li>En la ventana del cliente <strong>no hay ningún camión</strong>.</li>
+<li>Antes de crear la sesión tampoco hay tráfico en ninguna: sin sesión nadie es
+servidor.</li>
+</ul>
+</div></div><div class="paso"><h3 class="paso-titulo">Entender por qué el cliente no ve nada</h3><p>No lo arregles todavía. Responde en tus notas:</p>
+<ol>
+<li>El servidor ya decide el tráfico. ¿Qué le falta para que el cliente lo vea?</li>
+<li>¿Serviría un RPC que dijera «he sacado un camión»? ¿Qué le pasaría a un
+jugador que entrara un minuto después?</li>
+</ol>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Decidir en el servidor es la mitad del trabajo. La otra mitad es que el
+resultado exista en las demás máquinas, y para objetos enteros eso no se hace
+con RPC sino haciéndolos aparecer en red. Es el módulo 3.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><ol>
+<li>Que los camiones sean objetos de red: prefab con <code>NetworkObject</code>, registrado,
+y creado por el servidor con <code>Spawn</code>.</li>
+<li>Un RPC serviría para los que están conectados en ese momento. El que llega
+tarde se perdería todos los camiones anteriores.</li>
+</ol>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Al pulsar H en el cliente, el primer log sale en la consola del anfitrión</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El efecto del claxon se percibe en las dos ventanas</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Sé explicar qué pierdo con <code>SendTo.Everyone</code> frente a los dos pasos</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El tráfico solo existe en la ventana del anfitrión, y sé por qué</li>
+</ul>
+</div><details class="problema"><summary>Error de compilación: Rpc method must end with &#x27;Rpc&#x27; suffix</summary><div class="desplegable-cuerpo"><p>El nombre del método marcado con <code>[Rpc]</code> tiene que terminar en <code>Rpc</code>. Es una
+comprobación del compilador de Netcode.</p>
+</div></details><details class="problema"><summary>Pulso H y no sale ningún log</summary><div class="desplegable-cuerpo"><p>Comprueba que el script está en el prefab que usa el NetworkManager como
+jugador, que hereda de <code>NetworkBehaviour</code> y no de <code>MonoBehaviour</code>, y que la
+ventana en la que pulsas tiene el foco.</p>
+</div></details><details class="problema"><summary>El tráfico desaparece también en el anfitrión</summary><div class="desplegable-cuerpo"><p>La guarda se evalúa antes de que exista la sesión. Comprueba que has creado la
+sesión, y que la condición es <code>!manager.IsServer</code> y no <code>!manager.IsClient</code>.</p>
+</div></details><div class="aviso aviso-nota"><span class="aviso-etiqueta">Nota</span><p>El juego queda a medias al terminar: el cliente conduce por una carretera vacía.
+Déjalo así, en su rama. El laboratorio 3.2 empieza exactamente aquí.</p>
+</div>
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html" target="_blank" rel="noopener">RPC</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc-params.html" target="_blank" rel="noopener">RPC params</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkbehaviour.html" target="_blank" rel="noopener">NetworkBehaviour</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M02/01-rpc-y-logica-de-servidor.html">
+      <span class="direccion">← Anterior</span>
+      RPC y lógica de servidor
+    </a>
+    <a class="siguiente" href="../M03/01-objetos-en-red.html">
+      <span class="direccion">Siguiente →</span>
+      Objetos en red: aparecer, desaparecer, emparentar
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

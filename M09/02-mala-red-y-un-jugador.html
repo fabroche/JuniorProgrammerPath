@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mala red y un jugador · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 9 · Depurar y cerrar · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~90 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Mala red y un jugador</h1>
+  <p class="leccion-resumen">El examen final de tu juego: ponerle una conexión mala, repetir los experimentos de todo el curso, medir lo que envía y dejarlo jugable sin red.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Simular latencia, variación y pérdida sobre tu juego</li>
+      <li>Identificar qué mecánica se degrada primero con mala red</li>
+      <li>Medir cuánto envía tu juego y encontrar qué gasta más</li>
+      <li>Arrancar la partida sin sesión ni servicios</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>No añades ninguna mecánica. Miras con otros ojos las que ya tienes. Lo que salga
+de aquí es una lista de lo que tu juego aguanta y lo que no, y eso es el
+verdadero final del curso.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El juego con carrera, tráfico en red y volante sincronizado</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 9.1 leída</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Un commit limpio antes de empezar</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Medir primero en buena red</h3><p>Añade a la escena de la partida un objeto con el componente
+<strong>RuntimeNetStatsMonitor</strong>. Juega una carrera con dos jugadores y apunta los
+valores de envío y recepción en tres momentos: en la espera, en plena carrera
+sin tráfico cerca, y con varios camiones en pantalla.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Sin una medida de partida no sabrás si algo que cambies después lo mejora o lo
+empeora. Y es la primera vez que ves cuánto cuesta cada cosa que has
+sincronizado.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Un panel sobre el juego con gráficas. Tres apuntes en tus notas. Lo esperable es
+que el envío suba con el número de camiones, porque cada uno lleva un
+<code>NetworkTransform</code>.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Encontrar qué gasta más</h3><p>Abre <strong>Window → Analysis → Profiler</strong>, busca los módulos de red y graba una
+carrera. Localiza el objeto o el mensaje que más bytes mueve.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El monitor dice cuánto. El perfilador dice quién. Las optimizaciones que no
+empiezan por aquí suelen arreglar lo que no era el problema.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Una respuesta concreta en tus notas: qué objeto, cuántos bytes por fotograma.
+Los candidatos son el <code>NetworkTransform</code> de los camiones y tu NetworkVariable
+del volante.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Estropear la red</h3><p>Añade el componente <strong>Network Simulator</strong> al objeto del NetworkManager y elige
+un perfil de conexión doméstica mala. Juega una carrera con dos jugadores.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Hasta ahora los datos tardaban menos de un milisegundo. Este es el primer
+momento del curso en el que tu juego se parece a lo que vivirá un jugador real.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El coche del otro jugador va más retrasado, y su movimiento es menos suave. Tu
+propio coche responde igual que siempre: tienes la autoridad sobre él y no
+depende de la red.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Repetir los experimentos del curso</h3><p>Con la red estropeada, repite uno a uno y anota en una tabla qué cambia:</p>
+<table>
+<thead>
+<tr>
+<th>Experimento</th>
+<th>Laboratorio</th>
+<th>Con mala red</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Conducir y mirar la copia en la otra ventana</td>
+<td>0.2</td>
+<td></td>
+</tr>
+<tr>
+<td>Tocar el claxon</td>
+<td>2.2</td>
+<td></td>
+</tr>
+<tr>
+<td>Ver aparecer y moverse los camiones</td>
+<td>3.2</td>
+<td></td>
+</tr>
+<tr>
+<td>Girar el volante con el coche parado</td>
+<td>4.2</td>
+<td></td>
+</tr>
+<tr>
+<td>Chocar dos coches</td>
+<td>4.2</td>
+<td></td>
+</tr>
+<tr>
+<td>La cuenta atrás, en las dos ventanas</td>
+<td>5.2</td>
+<td></td>
+</tr>
+<tr>
+<td>Elegir vehículo y pulsar listo</td>
+<td>7.2</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Cada mecánica usa una herramienta distinta, y cada herramienta se degrada de una
+forma. Verlas una al lado de otra bajo la misma red mala es lo que fija cuándo
+usar cada una.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Lo que dice la teoría, y que tu tabla tiene que confirmar o corregir:</p>
+<ul>
+<li>Lo que va por NetworkVariable llega tarde pero llega bien.</li>
+<li>Lo que va por RPC fiable llega tarde, y con pérdida puede llegar a ráfagas.</li>
+<li>Los choques son lo que peor queda: cada máquina choca contra una copia que
+está todavía más lejos de la real.</li>
+</ul>
+</div></div><div class="paso"><h3 class="paso-titulo">Subir la apuesta</h3><p>Cambia a un perfil de red móvil antigua, o pon valores a mano parecidos a los
+del vídeo: 50 ms de retraso, 50 de variación y 10 % de pérdida. Repite solo los
+experimentos que antes aguantaron bien.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Buscar el punto en el que algo deja de funcionar dice más que comprobar que
+funciona en un caso.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Una frase en tus notas por cada mecánica: «aguanta hasta aquí» o «se rompe a
+partir de aquí».</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Un RPC que puede perderse</h3><p>El claxon es un aviso que a nadie le importa perder. Cambia su entrega a no
+fiable:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="na">[Rpc(SendTo.Everyone, Delivery = RpcDelivery.Unreliable)]</span>
+</code></pre>
+<p>Con el 10 % de pérdida, tócalo veinte veces y cuenta cuántas suena en la otra
+ventana.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la decisión de la lección 9.1 aplicada. Y contarlo convierte «puede perderse»
+en un número.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Suena en la otra ventana menos de veinte veces, en torno a las que deja pasar la
+pérdida que hayas configurado. Decide si te vale y déjalo como prefieras.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Jugar sin red</h3><p>Añade al menú un botón de un jugador que arranque la partida sin crear ninguna
+sesión: <code>NetworkManager.Singleton.StartHost()</code> directamente, y cargar la escena
+de la partida.</p>
+<p>Antes de pulsarlo, desconecta el ordenador de internet.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Un jugador solo es un anfitrión sin clientes. Si tus guardas están bien puestas,
+todo el juego funciona sin tocar nada. Si algo falla aquí, has encontrado un
+sitio donde el código daba por hecho que había servicios o un segundo jugador.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Sin internet: el coche aparece, hay tráfico, la carrera arranca al pulsar
+«listo» y termina con el tiempo. Cada cosa que no funcione es un hallazgo.
+Apúntalo con el motivo.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Quitar lo que no debe salir</h3><p>Desactiva el simulador de red y el monitor de estadísticas, o déjalos en un
+objeto que solo exista en el editor.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El simulador no actúa en un build final, pero un monitor de estadísticas a la
+vista de los jugadores no es lo que quieres enseñar.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>El juego vuelve a comportarse como al principio del laboratorio.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Tengo medidas de envío en buena red, antes de tocar nada</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Sé qué objeto o mensaje gasta más ancho de banda</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He rellenado la tabla de experimentos con mala red</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He decidido si el claxon es fiable o no, con un número delante</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El juego arranca y se puede terminar una carrera sin internet</li>
+</ul>
+</div><details class="problema"><summary>No encuentro los componentes Network Simulator ni RuntimeNetStatsMonitor</summary><div class="desplegable-cuerpo"><p>Pertenecen al paquete Multiplayer Tools. Comprueba en el Package Manager que
+sigue instalado; en tu <code>manifest.json</code> figura la versión 2.2.12.</p>
+</div></details><details class="problema"><summary>El simulador no parece hacer nada</summary><div class="desplegable-cuerpo"><p>Comprueba que está en el mismo objeto que el NetworkManager y su transporte, y
+que el perfil elegido no es el vacío. Solo actúa en el editor y en builds de
+desarrollo.</p>
+</div></details><details class="problema"><summary>En un jugador no aparece el coche</summary><div class="desplegable-cuerpo"><p>Si quitaste el <code>PlayerPrefab</code> en el módulo 7, el coche lo crea tu código al
+cargar la escena de partida. El botón de un jugador tiene que pasar por el mismo
+camino, o crear el vehículo él.</p>
+</div></details><details class="problema"><summary>En un jugador sale un error de servicios</summary><div class="desplegable-cuerpo"><p>Algún script inicializa los servicios o consulta la sesión al arrancar. En el
+modo de un jugador no hay ni lo uno ni lo otro: esa llamada tiene que quedar
+solo en el camino multijugador.</p>
+</div></details><h2>Y ahora</h2>
+<p>Has recorrido el vídeo entero. Tu juego tiene movimiento, tráfico, estado de
+partida, selección, sesiones por internet y un modo sin red, y de cada pieza
+sabes por qué está hecha así.</p>
+<p>Lo que queda es tu backlog. Los issues abiertos del repositorio son un buen
+siguiente paso, y varios han cambiado de forma al añadir la red: el pool de
+camiones, el estado al reciclarlos, y lo que hayas decidido sobre los choques.</p>
+
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.multiplayer.tools@2.2/manual/index.html" target="_blank" rel="noopener">Multiplayer Tools 2.2 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/learn/dealing-with-latency.html" target="_blank" rel="noopener">Dealing with latency</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html" target="_blank" rel="noopener">RPC</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M09/01-depurar-y-cerrar.html">
+      <span class="direccion">← Anterior</span>
+      Depurar y cerrar: mala red, medidas y un jugador
+    </a>
+    <span class="hueco"></span>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

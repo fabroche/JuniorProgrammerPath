@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dos jugadores en tu máquina · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 0 · Punto de partida · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~30 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Dos jugadores en tu máquina</h1>
+  <p class="leccion-resumen">Montar el banco de pruebas del curso: anfitrión y cliente a la vez, en tu ordenador, para mirar cada cambio desde los dos lados.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Arrancar un segundo jugador con Multiplayer Play Mode sin hacer un build</li>
+      <li>Crear una sesión como anfitrión y unirte como cliente</li>
+      <li>Encontrar en el Inspector qué copia de cada coche es de quién</li>
+      <li>Comprobar con tus manos que una copia ajena no obedece a tu teclado</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>Todo lo que venga después se comprueba igual: dos jugadores, y mirar desde los
+dos. Este laboratorio deja esa rutina montada. No escribes código.</p>
+<div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>En el vídeo cada prueba es un build: compilar el juego, abrir el ejecutable y
+compararlo con el editor. Tú tienes instalado Multiplayer Play Mode 1.6.3, que
+abre un segundo jugador como una ventana más del editor, sin compilar nada.</p>
+</div><div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La rama <code>multiplayer-player-sync</code> abierta en Unity, con la escena <code>Prototype 1</code></li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Conexión a internet: los botones de sesión de tu escena usan los servicios de Unity</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> La lección 0.1 leída</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Activar un segundo jugador</h3><p>En el menú <strong>Window → Multiplayer → Multiplayer Play Mode</strong>, marca la casilla de
+<strong>Player 2</strong>. Espera a que termine de prepararse.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Necesitas dos procesos, porque un juego en red son dos juegos enteros que se
+hablan. Un solo editor en Play nunca te enseña un fallo de sincronización: en él
+solo existe una copia de cada cosa.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Se abre una segunda ventana con la vista de juego de Player 2. Comparte tu
+proyecto: no es una copia de la carpeta, así que no hay nada que mantener
+sincronizado a mano.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Crear la sesión y unirte</h3><p>Pulsa <strong>Play</strong> en el editor. En tu ventana pulsa <strong>Create Session</strong>. En la
+ventana de Player 2 elige esa sesión en <strong>Session List</strong> y únete.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Quien crea la sesión arranca como anfitrión: es servidor y cliente a la vez.
+Quien se une es solo cliente. Tener uno de cada es lo que te deja ver la
+diferencia.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Dos coches en la escena, visibles en las dos ventanas. Cada ventana tiene su
+cámara siguiendo a un coche distinto.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Mirar desde los dos lados</h3><p>Conduce en tu ventana y mira el mismo coche en la de Player 2. Luego haz clic en
+la ventana de Player 2, conduce ahí, y mira en la tuya.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>El anfitrión no tiene retraso consigo mismo. Un fallo puede no verse nunca desde
+él y verse siempre desde el cliente, así que la costumbre es mirar las dos
+direcciones.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Los dos coches se mueven en las dos ventanas. La copia va un poco por detrás del
+original, como en la figura de la lección 0.1.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Encontrar al dueño en el Inspector</h3><p>Con el juego en marcha, en la <strong>Hierarchy</strong> del editor selecciona cada uno de
+los dos coches y mira su componente <strong>NetworkObject</strong>, y debajo su
+<code>TransportController</code>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>La lección 0.1 afirma que hay una copia por máquina y que <code>IsOwner</code> es lo único
+que las distingue. Aquí lo ves sin fiarte de nadie.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>En el editor, que es el anfitrión:</p>
+<ul>
+<li>Un coche es tuyo: su controlador está activado.</li>
+<li>El otro es la copia del coche del cliente: su controlador está <strong>desactivado</strong>.
+Lo apagó tu <code>VehicleOwnership</code> en <code>OnNetworkSpawn</code>.</li>
+<li>Los dos tienen identificador de red y dueño distintos.</li>
+</ul>
+</div></div><div class="paso"><h3 class="paso-titulo">Forzar una copia a obedecerte</h3><p>Sin parar el juego, selecciona en el editor la copia del coche del cliente y
+<strong>activa a mano</strong> su controlador en el Inspector. Conduce.</p>
+<p>Antes de hacerlo, escribe tu predicción: ¿se moverá esa copia en tu ventana? ¿Y
+en la de Player 2?</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es el experimento que justifica la línea <code>controller.enabled = IsOwner</code>. Verlo
+fallar una vez enseña más que leer por qué está ahí.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Lo que dice la teoría, y que tienes que confirmar: tus teclas intentan mover las
+dos copias a la vez en tu ventana, pero la del cliente no te pertenece. Su
+posición la decide su dueño, y lo que llegue de él la devuelve a su sitio. En la
+ventana de Player 2 su coche no debería enterarse de nada.</p>
+<p>Anota lo que veas de verdad. Si no coincide, es justo lo que hay que entender.</p>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Player 2 arranca sin hacer un build</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Sé cuál de las dos ventanas es el anfitrión y cuál el cliente</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He visto en el Inspector el controlador desactivado en la copia ajena</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He hecho el experimento del último paso y he anotado el resultado</li>
+</ul>
+</div><details class="problema"><summary>La sesión no aparece en Session List</summary><div class="desplegable-cuerpo"><p>Los botones de tu escena crean y listan sesiones a través de los servicios de
+Unity, no por red local. Comprueba que el proyecto está enlazado en
+<strong>Edit → Project Settings → Services</strong> y que hay conexión. Pulsa de nuevo el
+botón de refrescar de la lista.</p>
+</div></details><details class="problema"><summary>Player 2 se queda preparándose mucho rato</summary><div class="desplegable-cuerpo"><p>La primera activación tarda porque monta su propia carpeta de trabajo. Las
+siguientes son rápidas. Si no termina, desmarca la casilla, espera y vuelve a
+marcarla.</p>
+</div></details><details class="problema"><summary>Los dos coches aparecen uno encima del otro</summary><div class="desplegable-cuerpo"><p>No es un fallo de red: los dos nacen en el mismo punto. Conduce uno y se
+separan. El reparto de puntos de salida se trata en el módulo 5.</p>
+</div></details><p>Con esto queda montado el banco. En el módulo 1 cambias quién tiene la autoridad
+sobre el movimiento y ves qué se rompe.</p>
+
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.multiplayer.playmode@1.6/manual/index.html" target="_blank" rel="noopener">Multiplayer Play Mode 1.6 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkobject.html" target="_blank" rel="noopener">NetworkObject</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/ownership.html" target="_blank" rel="noopener">Ownership</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M00/01-como-funciona-un-juego-en-red.html">
+      <span class="direccion">← Anterior</span>
+      Cómo funciona un juego en red por dentro
+    </a>
+    <a class="siguiente" href="../M01/01-conexion-y-autoridad.html">
+      <span class="direccion">Siguiente →</span>
+      Conexión y autoridad: quién mueve el coche
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

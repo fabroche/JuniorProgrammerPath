@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conexión y autoridad: quién mueve el coche · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 1 · Conexión y autoridad · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~25 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Conexión y autoridad: quién mueve el coche</h1>
+  <p class="leccion-resumen">La decisión que más pesa en un juego en red: si el movimiento lo decide el servidor o el dueño del objeto. Qué gana y qué pierde cada opción.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Enumerar lo mínimo que hace falta para que un objeto exista en red</li>
+      <li>Explicar qué significa que el movimiento sea autoritativo del servidor o del dueño</li>
+      <li>Predecir qué le pasa a un cliente que mueve un objeto sobre el que no tiene autoridad</li>
+      <li>Elegir entre las dos opciones según el tipo de juego</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M01/01-conexion-y-autoridad.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="1357" data-fin="2546"
+                data-rango="00:22:37 – 00:42:26">
+          <span class="video-capitulo-titulo">Install Netcode and basic Setup</span>
+          <span class="video-tramo">00:22:37 – 00:42:26</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="2546" data-fin="3260"
+                data-rango="00:42:26 – 00:54:20">
+          <span class="video-capitulo-titulo">Sync Player Movement, Client Vs Server Auth</span>
+          <span class="video-tramo">00:42:26 – 00:54:20</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="3260" data-fin="3551"
+                data-rango="00:54:20 – 00:59:11">
+          <span class="video-capitulo-titulo">Sync Player Animations</span>
+          <span class="video-tramo">00:54:20 – 00:59:11</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>En estos tres capítulos el autor instala Netcode, hace aparecer un jugador por
+cada conexión y sincroniza su movimiento y sus animaciones. Tú ya tienes eso
+hecho. Lo que te llevas de aquí es entender la decisión que tomaste sin saberlo
+al configurar el <code>NetworkTransform</code>.</p>
+<h2>Lo mínimo para existir en red</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Para que algo se vea en todas las máquinas hacen falta cuatro cosas:</p>
+<ol>
+<li>Un <strong>NetworkManager</strong> en la escena, que es quien conecta.</li>
+<li>Que el objeto sea un <strong>prefab</strong> y lleve un <strong>NetworkObject</strong>.</li>
+<li>Que ese prefab esté <strong>apuntado en una lista</strong> que conocen todas las máquinas.</li>
+<li>Que alguien lo haga aparecer. Para el jugador, lo hace el NetworkManager solo
+cada vez que entra alguien.</li>
+</ol>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El <code>NetworkManager</code> instancia su <code>PlayerPrefab</code> por cada cliente aprobado y le
+asigna ese cliente como dueño. El prefab necesita un <code>NetworkObject</code> y estar
+registrado en una lista de prefabs de red: al crear un objeto, el servidor no
+envía el objeto, envía un identificador del prefab, y cada cliente instancia el
+suyo a partir de su copia local.</p>
+<p>En tu proyecto esa lista es <code>Assets/DefaultNetworkPrefabs.asset</code>.</p>
+</div></div><div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>En el vídeo la lista de prefabs está dentro del propio NetworkManager, y el
+autor avisa de que en la siguiente versión pasaría a un objeto aparte. Es el
+<code>DefaultNetworkPrefabs</code> que tú ya tienes.</p>
+<p>También instala Quantum Console para leer los logs dentro de un build. Con
+Multiplayer Play Mode no hace falta: cada jugador tiene su consola en el editor.</p>
+</div><h2>El primer fallo: los dos jugadores obedecen al mismo teclado</h2>
+<p>Con el jugador apareciendo en las dos máquinas, el autor pulsa una tecla y se
+mueven los dos personajes a la vez. No es un fallo de red. Es que el script de
+movimiento se ejecuta en todas las copias, y todas leen el mismo teclado.</p>
+<p>Lo arregla con una línea al principio del <code>Update</code> del jugador:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">IsOwner</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+</code></pre>
+<p>Es lo mismo que hace tu <code>VehicleOwnership</code> con <code>controller.enabled = IsOwner</code>,
+resuelto en otro sitio. Él corta dentro del script; tú apagas el componente
+entero desde fuera, y así <code>TransportController</code> sigue sin saber nada de red.</p>
+<h2>Sincronizar el movimiento: quién tiene la última palabra</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Un <code>NetworkTransform</code> copia la posición y la rotación de un objeto a las demás
+máquinas. La pregunta es <strong>desde cuál</strong>.</p>
+<ul>
+<li>Si manda el <strong>servidor</strong>, él mueve el objeto y los demás solo miran. Un
+cliente no puede mover ni su propio coche: tiene que pedírselo al servidor.</li>
+<li>Si manda el <strong>dueño</strong>, cada jugador mueve su coche y se lo cuenta a los demás.</li>
+</ul>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>NetworkTransform</code> tiene un modo de autoridad con dos valores, <code>Server</code> y
+<code>Owner</code>. Solo la instancia con autoridad escribe el transform y lo replica; en
+las demás, el componente sobrescribe el transform local con lo recibido,
+interpolando.</p>
+<p>Si una instancia sin autoridad cambia el transform, su cambio no se envía a
+nadie y el siguiente dato recibido lo pisa.</p>
+</div></div><figure class="figura"><iframe data-figura="quien-manda" data-base="../figuras/quien-manda/quien-manda" loading="lazy" title="Figura interactiva"></iframe></figure><p>Mueve el puntero para empujar tu coche y pulsa para cambiar la palanca de la
+caja. Con el servidor al mando, fíjate en el reloj de la caja: no se mueve,
+porque al servidor no le ha llegado nada, y tu coche vuelve a esa posición.</p>
+<p>El autor lo demuestra en este orden, y merece la pena verlo en el vídeo:</p>
+<ol>
+<li>Pone un <code>NetworkTransform</code> normal. El anfitrión se mueve y se sincroniza. El
+cliente pulsa teclas, su animación de andar se reproduce, y <strong>no se mueve</strong>.</li>
+<li>Lo cambia por una versión con autoridad de cliente. Los dos se mueven.</li>
+<li>Vuelve al normal y hace que el cliente envíe sus teclas al servidor para que
+sea él quien mueva el personaje. Los dos se mueven, y manda el servidor.</li>
+</ol>
+<div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>Para el paso 2 el autor copia de la documentación un script, <code>ClientNetworkTransform</code>,
+que hereda de <code>NetworkTransform</code> y cambia una sola cosa. En tu versión no hace
+falta: el propio componente tiene el desplegable <strong>Authority Mode</strong>. En tu
+prefab <code>Vehicle_NetworkObject</code> está en <code>Owner</code>.</p>
+<p>Lo mismo vale para las animaciones: en el vídeo hay un <code>OwnerNetworkAnimator</code>
+copiado aparte, y hoy <code>NetworkAnimator</code> trae su propio modo de autoridad.</p>
+</div><h2>Qué se gana y qué se pierde</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>Manda el servidor</th>
+<th>Manda el dueño</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Respuesta al pulsar</td>
+<td>Con retraso: la tecla viaja, el servidor mueve, y vuelve</td>
+<td>Inmediata</td>
+</tr>
+<tr>
+<td>Trampas</td>
+<td>Difíciles: el servidor valida cada movimiento</td>
+<td>Fáciles: el cliente dice dónde está y se le cree</td>
+</tr>
+<tr>
+<td>Código</td>
+<td>Más: hay que enviar la intención y aplicarla en el servidor</td>
+<td>Menos: el movimiento se queda como estaba</td>
+</tr>
+<tr>
+<td>Choques entre jugadores</td>
+<td>Coherentes: los resuelve uno solo</td>
+<td>Cada uno ve una versión; hay que decidir cuál vale</td>
+</tr>
+</tbody>
+</table>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>El autor elige autoridad del cliente para todo el curso, y lo razona: es un
+juego cooperativo, nadie gana nada haciendo trampas, y la respuesta inmediata
+importa más. Tu juego de vehículos está en el mismo caso, y es lo que tienes
+configurado.</p>
+<p>Un juego competitivo con algo en juego elige lo contrario y paga el precio en
+código, normalmente añadiendo predicción en el cliente para disimular el
+retraso.</p>
+</div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>Autoridad del dueño no significa que el servidor desaparezca. Sigue siendo el
+único que puede crear y destruir objetos de red, y por él pasan todos los datos.
+Solo ha prestado una decisión: dónde está ese objeto.</p>
+</div><h2>Animaciones</h2>
+<p>El capítulo corto que cierra el módulo aplica la misma idea a las animaciones:
+un componente que replica los parámetros del <code>Animator</code>, con la misma pregunta
+de quién manda.</p>
+<p>Tu proyecto no usa <code>Animator</code> en los vehículos. Lo equivalente son las ruedas, y
+tu <code>WheelsVisual</code> ya lo resuelve sin red: deduce el giro de lo que el coche se
+desplaza, que es un dato que sí llega a todas las copias. Donde eso no alcanza
+es en el volante, y de ahí sale el módulo 4.</p>
+<div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Autoridad del servidor</dt>
+<dd>Solo el servidor cambia el estado. Los clientes envían intenciones.</dd>
+<dt>Autoridad del dueño</dt>
+<dd>El cliente dueño de un objeto cambia su estado y lo replica. También se llama
+autoridad del cliente.</dd>
+<dt>Interpolación</dt>
+<dd>Mover la copia suavemente entre los datos recibidos en vez de saltar de uno a
+otro. Por eso la copia va siempre un poco por detrás.</dd>
+<dt>Prefab de red</dt>
+<dd>Un prefab con <code>NetworkObject</code>, registrado en la lista que comparten todas las
+máquinas.</dd>
+</dl>
+</div><p>En el laboratorio cambias el modo de autoridad de tu coche y reproduces el paso
+1 del vídeo: el cliente que pulsa y no se mueve.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkmanager.html" target="_blank" rel="noopener">NetworkManager</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkobject.html" target="_blank" rel="noopener">NetworkObject</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/core/networkbehaviour.html" target="_blank" rel="noopener">NetworkBehaviour</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/ownership.html" target="_blank" rel="noopener">Ownership</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/client-server.html" target="_blank" rel="noopener">Client-server topology</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M00/02-dos-jugadores-en-tu-maquina.html">
+      <span class="direccion">← Anterior</span>
+      Dos jugadores en tu máquina
+    </a>
+    <a class="siguiente" href="../M01/02-quien-mueve-el-coche.html">
+      <span class="direccion">Siguiente →</span>
+      Quién mueve el coche
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

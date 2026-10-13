@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Jugar por internet: encontrarse y conectarse · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 8 · Jugar por internet · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~35 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Jugar por internet: encontrarse y conectarse</h1>
+  <p class="leccion-resumen">Dos problemas distintos que suelen confundirse: cómo descubre un jugador que existe una partida, y cómo llegan los datos de una casa a otra sin abrir puertos.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Separar el problema de encontrarse del problema de conectarse</li>
+      <li>Explicar qué resuelve un servicio de salas y qué resuelve un relé</li>
+      <li>Traducir los pasos del vídeo, con Lobby y Relay por separado, a las sesiones de tu versión</li>
+      <li>Saber qué tiene que ocurrir antes de poder usar cualquier servicio de Unity</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M08/01-jugar-por-internet.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="16654" data-fin="20130"
+                data-rango="04:37:34 – 05:35:30">
+          <span class="video-capitulo-titulo">Lobby</span>
+          <span class="video-tramo">04:37:34 – 05:35:30</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="20130" data-fin="21102"
+                data-rango="05:35:30 – 05:51:42">
+          <span class="video-capitulo-titulo">Relay</span>
+          <span class="video-tramo">05:35:30 – 05:51:42</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="21102" data-fin="21309"
+                data-rango="05:51:42 – 05:55:09">
+          <span class="video-capitulo-titulo">Game Server Hosting (Multiplay), Matchmaker, Vivox</span>
+          <span class="video-tramo">05:51:42 – 05:55:09</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>Es el tramo más largo del vídeo, casi hora y cuarto, y el que más ha cambiado
+desde 2023. Las ideas siguen valiendo todas. El código, casi ninguno: lo que el
+autor monta a mano con dos servicios, tu versión lo hace con uno. Por eso esta
+lección separa con cuidado el qué del cómo.</p>
+<h2>Dos problemas, no uno</h2>
+<p>Hasta aquí, conectar dos jugadores en una misma máquina no tenía misterio. Por
+internet aparecen dos obstáculos que no tienen nada que ver entre sí.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p><strong>Encontrarse.</strong> Tu amigo quiere unirse a tu partida. ¿Cómo sabe que existe?
+¿Cómo la distingue de las de otros? Hace falta un tablón de anuncios donde las
+partidas se apuntan y la gente las busca, o un código que tú le dictas.</p>
+<p><strong>Conectarse.</strong> Aunque sepa que existe, su ordenador no puede llamar al tuyo. Tu
+router no deja entrar conexiones que no has pedido tú. Hace falta un
+intermediario al que los dos podáis llamar, y que pase los datos de uno a otro.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El primer problema es de <strong>descubrimiento</strong>, y lo resuelve un servicio de salas:
+un registro en la nube de partidas con nombre, aforo, visibilidad y datos
+asociados, consultable y con códigos de acceso.</p>
+<p>El segundo es de <strong>conectividad</strong>. La mayoría de los jugadores están detrás de
+un NAT, que no admite conexiones entrantes sin redirección de puertos. Un relé
+es un servidor público al que tanto el anfitrión como los clientes abren
+conexiones <strong>salientes</strong>, que el NAT sí permite, y que reenvía los paquetes
+entre ellos.</p>
+</div></div><div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>El relé no es el servidor del juego. No ejecuta tu código ni decide nada: solo
+pasa paquetes. El servidor sigue siendo el anfitrión, en casa de un jugador. Lo
+que cambia es el camino que recorren los datos, y con él la latencia: cada
+mensaje hace una parada más.</p>
+</div><figure class="figura"><iframe data-figura="el-rele" data-base="../figuras/el-rele/el-rele" loading="lazy" title="Figura interactiva"></iframe></figure><p>La figura arranca en la ruta directa: la cápsula llega a la compuerta del otro
+router y vuelve. Pulsa para pasar a la ruta por el relé.</p>
+<h2>Antes de nada: servicios y sesión iniciada</h2>
+<p>Cualquier servicio de Unity exige lo mismo, y el vídeo empieza por ahí:</p>
+<ol>
+<li>El proyecto enlazado a un proyecto de la nube de Unity.</li>
+<li>Inicializar los servicios al arrancar.</li>
+<li>Iniciar sesión, aunque sea de forma anónima: el servicio necesita distinguir
+a cada jugador.</li>
+</ol>
+<div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>El autor se encuentra con un problema que también es tuyo. Al probar con varias
+copias del juego en un mismo ordenador, todas inician sesión con la misma
+identidad anónima, porque se guarda por dispositivo, y el servicio las trata
+como un solo jugador. Lo arregla dándole a cada copia un perfil distinto al
+inicializar. Con Multiplayer Play Mode pasa lo mismo si nadie lo evita.</p>
+</div><h2>Lo que el vídeo monta a mano</h2>
+<p>Con el servicio de salas, el autor escribe un gestor que hace todo esto:</p>
+<ul>
+<li>Crear una sala con nombre, aforo y visibilidad pública o privada.</li>
+<li>Unirse de tres formas: rápida a la primera con hueco, por código, o
+eligiéndola de una lista.</li>
+<li>Mantener viva la sala: si el anfitrión no envía una señal cada pocos
+segundos, el servicio la da por abandonada y la oculta.</li>
+<li>Refrescar la lista cada cierto tiempo, respetando los límites de peticiones
+del servicio.</li>
+<li>Salir, expulsar a un jugador, y borrar la sala cuando empieza la partida.</li>
+<li>Sincronizar el nombre de cada jugador, añadiéndolo a sus datos del módulo 7.</li>
+</ul>
+<p>Con el relé, otros cuatro pasos encadenados:</p>
+<pre class="codigo"><code class="lenguaje-text">  ANFITRIÓN                                        CLIENTE
+  ─────────                                        ───────
+  1. pide una plaza al relé
+  2. pide el código de esa plaza
+  3. guarda el código en los datos de la sala ───▶ 4. lee el código de la sala
+  5. configura el transporte con la plaza          5. pide entrar con el código
+  6. arranca como anfitrión                        6. configura el transporte
+                                                   7. arranca como cliente
+</code></pre>
+<p>El punto 3 es el que une los dos servicios: la sala sirve para encontrarse, y
+dentro lleva guardada la dirección del relé, que sirve para conectarse.</p>
+<h2>Lo que tienes tú</h2>
+<div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>Tu proyecto no tiene instalados los paquetes de salas y de relé por separado.
+Tiene <code>com.unity.services.multiplayer</code> 2.3.3, que los reúne bajo un solo
+concepto, la <strong>sesión</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>En el vídeo</th>
+<th>En tu versión</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Crear sala, pedir plaza al relé, guardar el código, configurar el transporte y arrancar</td>
+<td><code>CreateSessionAsync</code> con la opción de red por relé</td>
+</tr>
+<tr>
+<td>Unirse por código y configurar el transporte</td>
+<td><code>JoinSessionByCodeAsync</code></td>
+</tr>
+<tr>
+<td>Listar salas</td>
+<td><code>QuerySessionsAsync</code></td>
+</tr>
+<tr>
+<td>Señal periódica del anfitrión</td>
+<td>La gestiona la sesión</td>
+</tr>
+<tr>
+<td>Arrancar el NetworkManager a mano</td>
+<td>Lo arranca la sesión</td>
+</tr>
+</tbody>
+</table>
+<p>Y ya lo estás usando. Los botones <strong>Create Session</strong> y <strong>Session List</strong> de tu
+escena son componentes ya hechos que llaman a esto, configurados en
+<code>DefaultWidgetConfiguration</code>: tipo de conexión por relé y cuatro jugadores como
+máximo. Llevas todo el curso jugando a través de un relé sin haber escrito una
+línea.</p>
+</div><div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Una sesión es la partida vista desde fuera: tiene nombre, aforo, un código para
+entrar, y una lista de quién está. Crearla o unirse a ella se ocupa, por
+debajo, de encontrarse, de conectarse y de arrancar la red.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>MultiplayerService.Instance.CreateSessionAsync(opciones)</code> devuelve la sesión
+como anfitrión. Las opciones llevan nombre, <code>MaxPlayers</code>, <code>IsPrivate</code>, <code>IsLocked</code>
+y contraseña, y un método de extensión elige la red: <code>WithRelayNetwork()</code> para
+relé, o conexión directa. La sesión expone eventos de entrada y salida de
+jugadores, de expulsión y de eliminación, que sustituyen a parte de los
+callbacks del NetworkManager del módulo 6.</p>
+</div></div><h2>Lo que el vídeo solo menciona</h2>
+<p>El último capítulo es un repaso de tres minutos a servicios que no usa:</p>
+<ul>
+<li><strong>Servidores dedicados.</strong> Un servidor en la nube que no es ningún jugador.
+Quita la ventaja del anfitrión y permite que la partida sobreviva a que
+alguien se vaya. Cuesta dinero por hora de servidor.</li>
+<li><strong>Emparejamiento.</strong> En vez de elegir sala, el jugador pulsa «jugar» y el
+servicio lo junta con otros de nivel parecido.</li>
+<li><strong>Voz y texto.</strong> Chat entre jugadores. Tienes instalado el paquete, Vivox,
+sin usar.</li>
+</ul>
+<div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>La oferta de servicios de Unity ha cambiado bastante desde que se grabó el
+vídeo, y el alojamiento de servidores dedicados en particular. Antes de
+planificar nada sobre uno de ellos, comprueba en la documentación actual que
+sigue existiendo y en qué condiciones.</p>
+</div><div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>Sala (<em>lobby</em>)</dt>
+<dd>Registro en la nube de una partida a la que otros pueden unirse.</dd>
+<dt>Relé (<em>relay</em>)</dt>
+<dd>Servidor intermediario que reenvía paquetes entre jugadores que no pueden
+conectarse directamente.</dd>
+<dt>NAT</dt>
+<dd>Lo que hace tu router para que varios aparatos compartan una dirección. De
+paso, bloquea las conexiones entrantes.</dd>
+<dt>Sesión</dt>
+<dd>En tu versión, la partida vista desde fuera: reúne sala, conexión y arranque
+de la red.</dd>
+</dl>
+</div><p>En el laboratorio sustituyes los botones ya hechos por tu propio código, para
+entender qué hacían, y añades entrar con un código.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.services.multiplayer@2.3/manual/index.html" target="_blank" rel="noopener">Multiplayer Services SDK 2.3 · Manual</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/network-topologies.html" target="_blank" rel="noopener">Network topologies</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/client-server.html" target="_blank" rel="noopener">Client-server topology</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M07/02-menu-seleccion-y-juego.html">
+      <span class="direccion">← Anterior</span>
+      Menú, selección de vehículo y juego
+    </a>
+    <a class="siguiente" href="../M08/02-sesiones-con-codigo.html">
+      <span class="direccion">Siguiente →</span>
+      Sesiones con código
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

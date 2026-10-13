@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Quién mueve el coche · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 1 · Conexión y autoridad · Lección 2</span>
+    <span class="progreso">
+      <i class="hecho"></i>
+      <i class="actual"></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">lab</span>
+    <span class="pildora pildora-duracion">~35 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Quién mueve el coche</h1>
+  <p class="leccion-resumen">Cambiar la autoridad del movimiento de tu coche, ver al cliente quedarse clavado, y dejarlo como estaba sabiendo por qué.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Localizar el modo de autoridad en tu prefab de vehículo</li>
+      <li>Reproducir el fallo del cliente que pulsa y no se mueve</li>
+      <li>Recortar lo que el NetworkTransform envía a lo que tu coche de verdad cambia</li>
+      <li>Razonar qué haría falta para que mandara el servidor</li>
+    </ul>
+  </section>
+
+
+<div class="aviso aviso-ojo">
+  <span class="aviso-etiqueta">Sin ejecutar todavía</span>
+  <p>Este laboratorio está escrito sin haberse ejecutado en tu proyecto. Los
+  resultados que describe son los que deberían darse según la documentación y
+  el código instalado. Si algo no coincide, anótalo en
+  <code>NOTAS-PENDIENTES.md</code> y se corrige la lección.</p>
+</div>
+
+  <p>No vas a mejorar nada en este laboratorio. Vas a romper el movimiento a
+propósito, mirarlo roto, y arreglarlo. Al terminar el proyecto queda igual que
+al empezar, salvo un ajuste de ancho de banda.</p>
+<div class="tarjeta prerrequisitos"><span class="tarjeta-titulo">Antes de empezar</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El banco de la lección 0.2 funcionando: anfitrión en el editor, cliente en Player 2</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Un commit limpio antes de empezar, para poder volver atrás</li>
+</ul>
+</div><div class="paso"><h3 class="paso-titulo">Ver qué tienes configurado</h3><p>Abre el prefab <code>Assets/Course Library/Vehicles/Prefabs/Vehicle_NetworkObject</code>.
+En su componente <strong>NetworkTransform</strong> busca <strong>Authority Mode</strong>.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es la decisión de la lección 1.1, y la tomaste al montar el prefab. Antes de
+cambiarla conviene saber de dónde partes.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p><code>Authority Mode</code> está en <strong>Owner</strong>. En el fichero del prefab es la línea
+<code>AuthorityMode: 1</code>.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Darle la autoridad al servidor</h3><p>Cambia <code>Authority Mode</code> a <strong>Server</strong>. No toques nada más. Entra en Play, crea la
+sesión en el editor y únete desde Player 2.</p>
+<p>Escribe antes tu predicción para cada una de estas cuatro combinaciones:</p>
+<table>
+<thead>
+<tr>
+<th>Conduce</th>
+<th>Se mira en</th>
+<th>¿Se mueve?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Anfitrión</td>
+<td>Su ventana</td>
+<td></td>
+</tr>
+<tr>
+<td>Anfitrión</td>
+<td>Ventana del cliente</td>
+<td></td>
+</tr>
+<tr>
+<td>Cliente</td>
+<td>Su ventana</td>
+<td></td>
+</tr>
+<tr>
+<td>Cliente</td>
+<td>Ventana del anfitrión</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Tu <code>VehicleOwnership</code> sigue activando el controlador solo en el dueño. Pero
+ahora el <code>NetworkTransform</code> solo acepta el movimiento que venga del servidor.
+Las dos reglas chocan en un caso concreto, y encontrarlo es el laboratorio.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Según el vídeo y la documentación, que tienes que confirmar:</p>
+<ul>
+<li>El coche del anfitrión se mueve en las dos ventanas. El anfitrión es el
+servidor, así que tiene autoridad sobre todo.</li>
+<li>El coche del cliente <strong>no avanza</strong>, o avanza y vuelve a su sitio. Su
+controlador lee el teclado y mueve el transform, pero el cliente no tiene
+autoridad, y lo que llega del servidor lo devuelve.</li>
+<li>En la ventana del anfitrión, el coche del cliente no se mueve nunca.</li>
+</ul>
+</div></div><div class="paso"><h3 class="paso-titulo">Devolverle la autoridad al dueño</h3><p>Vuelve a poner <code>Authority Mode</code> en <strong>Owner</strong> y repite la prueba.</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Para tu juego la autoridad del dueño es la elección correcta, por lo mismo que
+razona el autor: cooperativo, sin nada que ganar con trampas, y la respuesta al
+volante es lo primero que se nota.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><p>Los dos coches se mueven en las dos ventanas, como antes de empezar.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Enviar solo lo que cambia</h3><p>En el mismo <code>NetworkTransform</code>, revisa las casillas de sincronización de
+posición, rotación y escala. Desmarca las que tu coche no cambia nunca.</p>
+<p>Para decidirlo, lee <code>CarWithWheelsController.Turn()</code> y
+<code>TransportController.Move()</code> y responde: ¿sobre qué eje rota el coche? ¿Cambia
+su escala alguna vez?</p>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Cada casilla marcada es un dato que se compara y se envía 30 veces por segundo
+por cada vehículo. El autor hace este recorte en el vídeo nada más añadir el
+componente: su jugador no salta, así que no envía la altura.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><ul>
+<li><code>Turn()</code> rota solo alrededor de <code>Vector3.up</code>: las rotaciones X y Z sobran.</li>
+<li>Nada cambia la escala: sus tres casillas sobran.</li>
+<li>La posición Y depende de tu escena. Si el suelo es plano, sobra. Si hay
+rampas, o si este prefab lo usa también el avión, hace falta.</li>
+</ul>
+<p>Tras el cambio el coche se ve exactamente igual en las dos ventanas.</p>
+</div></div><div class="paso"><h3 class="paso-titulo">Pensar el otro camino</h3><p>Sin escribir código, responde por escrito en tus notas:</p>
+<ol>
+<li>Si quisieras autoridad del servidor, ¿qué tendría que enviar el cliente: su
+posición, o sus teclas?</li>
+<li>¿En qué máquina se ejecutaría entonces <code>Accelerate()</code>?</li>
+<li>¿Qué notaría el jugador al pulsar acelerar con 200 ms de retraso?</li>
+</ol>
+<div class="porque"><span class="aviso-etiqueta">Por qué esto es necesario</span><p>Es el tercer experimento del vídeo, el que el autor escribe y luego deshace.
+Para hacerlo hace falta un RPC, que es el tema del módulo 2. Llegar con la
+pregunta ya pensada hace que el RPC responda a algo.</p>
+</div><div class="esperado"><span class="aviso-etiqueta">Salida esperada</span><ol>
+<li>Las teclas. Si enviara la posición, el servidor volvería a fiarse de él.</li>
+<li>En el servidor, que es quien tendría la autoridad sobre el transform.</li>
+<li>Que el coche tarda en responder: la tecla va, el servidor mueve, y el
+resultado vuelve.</li>
+</ol>
+</div></div><div class="verificar"><span class="aviso-etiqueta">Comprueba antes de seguir</span><ul class="contains-task-list">
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> He visto al coche del cliente quedarse sin avanzar con la autoridad en Server</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> <code>Authority Mode</code> vuelve a estar en Owner</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> El <code>NetworkTransform</code> solo sincroniza los ejes que el coche cambia</li>
+<li class="task-list-item enabled"><input class="task-list-item-checkbox"  type="checkbox"> Puedo explicar por qué con autoridad del servidor el cliente envía teclas y no posiciones</li>
+</ul>
+</div><details class="problema"><summary>Con Server el coche del cliente sí se mueve</summary><div class="desplegable-cuerpo"><p>Comprueba que cambiaste el prefab que está registrado como <code>PlayerPrefab</code> en el
+NetworkManager y no otro parecido: hay un <code>Tank_NetworkObject</code> al lado. Y que
+saliste de Play antes de cambiarlo.</p>
+</div></details><details class="problema"><summary>Tras desmarcar ejes el coche se hunde o se inclina en la copia</summary><div class="desplegable-cuerpo"><p>Has desmarcado un eje que sí cambia. Vuelve a marcar la posición Y, que es la
+candidata más probable.</p>
+</div></details><p>El módulo 2 trae la pieza que faltaba en el último paso: cómo se le dice algo al
+servidor.</p>
+
+
+<p class="pie-nota">
+  Las casillas que marques se guardan en este navegador. Puedes cerrar la
+  página y retomar el laboratorio donde lo dejaste.
+</p>
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/components/helper/networktransform.html" target="_blank" rel="noopener">NetworkTransform</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/ownership.html" target="_blank" rel="noopener">Ownership</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M01/01-conexion-y-autoridad.html">
+      <span class="direccion">← Anterior</span>
+      Conexión y autoridad: quién mueve el coche
+    </a>
+    <a class="siguiente" href="../M02/01-rpc-y-logica-de-servidor.html">
+      <span class="direccion">Siguiente →</span>
+      RPC y lógica de servidor
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

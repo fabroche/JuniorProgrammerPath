@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-label="A un lado manda el servidor; al otro, el dueño del coche">
+  <defs>
+    <linearGradient id="fondo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#12141F"/><stop offset="1" stop-color="#0B0C13"/>
+    </linearGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="#0E8FA8" stop-opacity="0.30"/><stop offset="1" stop-color="#0E8FA8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="puntos" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.4" fill="#262A3A"/>
+    </pattern>
+    <symbol id="coche" viewBox="0 0 120 60">
+      <path d="M30 28 L44 9 Q46 6 50 6 H78 Q82 6 84 9 L96 28 Z" fill="currentColor"/>
+      <path d="M40 26 L49 13 H61 V26 Z M65 13 H77 L86 26 H65 Z" fill="#0B0C13" opacity="0.55"/>
+      <rect x="4" y="26" width="112" height="22" rx="9" fill="currentColor"/>
+      <rect x="104" y="31" width="10" height="6" rx="3" fill="#FFF4C2"/>
+      <circle cx="32" cy="48" r="10" fill="#0B0C13"/><circle cx="32" cy="48" r="4" fill="#8B8FA3"/>
+      <circle cx="90" cy="48" r="10" fill="#0B0C13"/><circle cx="90" cy="48" r="4" fill="#8B8FA3"/>
+    </symbol>
+    <symbol id="copia" viewBox="0 0 120 60">
+      <g fill="none" stroke="currentColor" stroke-width="2.5" stroke-dasharray="6 5" stroke-linejoin="round">
+        <path d="M30 28 L44 9 Q46 6 50 6 H78 Q82 6 84 9 L96 28"/>
+        <rect x="4" y="26" width="112" height="22" rx="9"/>
+        <circle cx="32" cy="48" r="10"/><circle cx="90" cy="48" r="10"/>
+      </g>
+    </symbol>
+    <symbol id="avion" viewBox="0 0 120 60">
+      <path d="M8 30 Q8 22 20 22 H84 Q112 22 112 30 Q112 38 84 38 H20 Q8 38 8 30 Z" fill="currentColor"/>
+      <path d="M46 24 L62 2 H74 L66 24 Z M46 36 L62 58 H74 L66 36 Z M12 24 L18 8 H26 L24 24 Z" fill="currentColor"/>
+      <rect x="88" y="26" width="14" height="6" rx="3" fill="#0B0C13" opacity="0.55"/>
+    </symbol>
+    <symbol id="pantalla" viewBox="0 0 380 300">
+      <rect x="150" y="238" width="80" height="34" fill="#1F2231"/>
+      <rect x="104" y="268" width="172" height="14" rx="7" fill="#262A3A"/>
+      <rect x="4" y="4" width="372" height="240" rx="20" fill="#1A1D2A" stroke="#333850" stroke-width="3"/>
+      <rect x="20" y="20" width="340" height="208" rx="10" fill="#0C0E15"/>
+    </symbol>
+    <symbol id="ventana" viewBox="0 0 380 260">
+      <rect x="4" y="4" width="372" height="252" rx="16" fill="#1A1D2A" stroke="#333850" stroke-width="3"/>
+      <rect x="16" y="40" width="348" height="204" rx="8" fill="#0C0E15"/>
+      <circle cx="28" cy="22" r="6" fill="#F0627A"/><circle cx="48" cy="22" r="6" fill="#F5B942"/><circle cx="68" cy="22" r="6" fill="#34D399"/>
+    </symbol>
+  </defs>
+  <rect width="1280" height="720" fill="url(#fondo)"/><rect width="1280" height="720" fill="url(#puntos)"/><rect width="1280" height="720" fill="url(#halo)"/>
+  <path d="M640 130 V470" stroke="#333850" stroke-width="3" stroke-dasharray="10 12"/><path d="M246 162 V128 L266 146 L284 118 L302 146 L322 128 V162 Z" fill="#22A6C0" stroke-linejoin="round"/><rect x="210" y="176" width="148" height="316" rx="18" fill="#1A1D2A" stroke="#22A6C0" stroke-width="3"/><rect x="228" y="198" width="112" height="56" rx="8" fill="#0C0E15" stroke="#333850" stroke-width="2"/><path d="M272 218 H324 M272 234 H308" stroke="#333850" stroke-width="3" stroke-linecap="round"/><circle cx="248" cy="226" r="7" fill="#34D399"/><rect x="228" y="270" width="112" height="56" rx="8" fill="#0C0E15" stroke="#333850" stroke-width="2"/><path d="M272 290 H324 M272 306 H308" stroke="#333850" stroke-width="3" stroke-linecap="round"/><circle cx="248" cy="298" r="7" fill="#8E8AF0"/><rect x="228" y="342" width="112" height="56" rx="8" fill="#0C0E15" stroke="#333850" stroke-width="2"/><path d="M272 362 H324 M272 378 H308" stroke="#333850" stroke-width="3" stroke-linecap="round"/><circle cx="248" cy="370" r="7" fill="#2FB8D2"/><path d="M240 428 H328 M240 444 H328 M240 460 H328" stroke="#333850" stroke-width="3" stroke-linecap="round"/><use href="#copia" x="392" y="372" width="190" height="95" color="#7B76EC" opacity="0.8"/><path d="M366 330 H420" stroke="#22A6C0" stroke-width="4" stroke-linecap="round"/><path d="M408 318 l14 12 l-14 12" fill="none" stroke="#22A6C0" stroke-width="4" stroke-linejoin="round"/><path d="M788 340 V306 L808 324 L826 296 L844 324 L864 306 V340 Z" fill="#7B76EC" stroke-linejoin="round"/><use href="#coche" x="730" y="352" width="230" height="115" color="#7B76EC"/><g opacity="0.45"><rect x="980" y="176" width="148" height="316" rx="18" fill="#1A1D2A" stroke="#333850" stroke-width="3"/><rect x="998" y="198" width="112" height="56" rx="8" fill="#0C0E15" stroke="#333850" stroke-width="2"/><path d="M1042 218 H1094 M1042 234 H1078" stroke="#333850" stroke-width="3" stroke-linecap="round"/><circle cx="1018" cy="226" r="7" fill="#333850"/><rect x="998" y="270" width="112" height="56" rx="8" fill="#0C0E15" stroke="#333850" stroke-width="2"/><path d="M1042 290 H1094 M1042 306 H1078" stroke="#333850" stroke-width="3" stroke-linecap="round"/><circle cx="1018" cy="298" r="7" fill="#333850"/><rect x="998" y="342" width="112" height="56" rx="8" fill="#0C0E15" stroke="#333850" stroke-width="2"/><path d="M1042 362 H1094 M1042 378 H1078" stroke="#333850" stroke-width="3" stroke-linecap="round"/><circle cx="1018" cy="370" r="7" fill="#333850"/><path d="M1010 428 H1098 M1010 444 H1098 M1010 460 H1098" stroke="#333850" stroke-width="3" stroke-linecap="round"/></g><path d="M1016 162 V128 L1036 146 L1054 118 L1072 146 L1092 128 V162 Z" fill="none" stroke="#8B8FA3" stroke-width="4" stroke-dasharray="6 6" stroke-linejoin="round"/>
+  <g><rect x="48" y="44" width="92" height="76" rx="16" fill="#1A1D2A" stroke="#22A6C0" stroke-width="3"/><rect x="66" y="60" width="38" height="30" rx="5" fill="none" stroke="#2FB8D2" stroke-width="3"/><rect x="84" y="74" width="38" height="30" rx="5" fill="#1A1D2A" stroke="#2FB8D2" stroke-width="3"/></g>
+</svg>

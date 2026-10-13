@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estado continuo: NetworkVariable frente a RPC · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 4 · Estado continuo · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~30 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">Estado continuo: NetworkVariable frente a RPC</h1>
+  <p class="leccion-resumen">La segunda forma de cruzar la red: un valor compartido en vez de un aviso. Cuándo conviene cada una, y qué pasa cuando dos jugadores con autoridad propia chocan.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Declarar una NetworkVariable y reaccionar a sus cambios</li>
+      <li>Elegir entre RPC y NetworkVariable para un dato concreto</li>
+      <li>Explicar los permisos de lectura y escritura y quién puede escribir por defecto</li>
+      <li>Describir por qué las colisiones entre jugadores son un problema de diseño y no solo de física</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M04/01-estado-continuo-networkvariable.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="7280" data-fin="7870"
+                data-rango="02:01:20 – 02:11:10">
+          <span class="video-capitulo-titulo">Sync Cutting Counter</span>
+          <span class="video-tramo">02:01:20 – 02:11:10</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="7870" data-fin="8932"
+                data-rango="02:11:10 – 02:28:52">
+          <span class="video-capitulo-titulo">Sync Stove Counter</span>
+          <span class="video-tramo">02:11:10 – 02:28:52</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="8932" data-fin="9287"
+                data-rango="02:28:52 – 02:34:47">
+          <span class="video-capitulo-titulo">Sync Plate Add Ingredients</span>
+          <span class="video-tramo">02:28:52 – 02:34:47</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="9287" data-fin="9904"
+                data-rango="02:34:47 – 02:45:04">
+          <span class="video-capitulo-titulo">Player collisions</span>
+          <span class="video-tramo">02:34:47 – 02:45:04</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>El autor sincroniza dos mostradores seguidos con herramientas distintas, y lo
+hace a propósito para que se vea la diferencia. La tabla de cortar va con RPC.
+El fogón, con <code>NetworkVariable</code>.</p>
+<h2>Dos mostradores, dos herramientas</h2>
+<p><strong>La tabla de cortar</strong> cuenta cortes: cada pulsación suma uno, y al llegar al
+total el tomate se convierte en rodajas. Cada corte es un <strong>suceso</strong>. El cliente
+pide el corte con un RPC, el servidor lo aplica y avisa a todos con otro.</p>
+<p><strong>El fogón</strong> tiene un temporizador que sube solo: la carne se hace, y si no la
+retiras se quema. No hay pulsaciones. Hay un <strong>valor que cambia continuamente</strong>
+y una barra de progreso que lo dibuja.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Para el fogón, avisar de cada cambio sería enviar un mensaje por fotograma.
+Tiene más sentido decir: «este número es compartido; cuando yo lo cambie, que
+todos lo tengan».</p>
+<p>Eso es una NetworkVariable. No avisas de nada. Escribes el valor, y la red se
+encarga de que las demás máquinas acaben teniendo el mismo.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p><code>NetworkVariable&lt;T&gt;</code> es un campo de un <code>NetworkBehaviour</code> cuyo valor replica
+Netcode. La instancia con permiso de escritura asigna <code>.Value</code>; en cada tick, si
+el valor cambió, se envía a las demás. Cada instancia expone <code>OnValueChanged</code>,
+que se invoca con el valor anterior y el nuevo.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">private</span><span class="w"> </span><span class="k">readonly</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="w"> </span><span class="n">tiempoCoccion</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">new</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span><span class="m">0f</span><span class="p">);</span>
+
+<span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnNetworkSpawn</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">tiempoCoccion</span><span class="p">.</span><span class="n">OnValueChanged</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="n">AlCambiarTiempo</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">public</span><span class="w"> </span><span class="k">override</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">OnNetworkDespawn</span><span class="p">()</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="n">tiempoCoccion</span><span class="p">.</span><span class="n">OnValueChanged</span><span class="w"> </span><span class="o">-=</span><span class="w"> </span><span class="n">AlCambiarTiempo</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">AlCambiarTiempo</span><span class="p">(</span><span class="kt">float</span><span class="w"> </span><span class="n">anterior</span><span class="p">,</span><span class="w"> </span><span class="kt">float</span><span class="w"> </span><span class="n">nuevo</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="w">    </span><span class="c1">// actualizar la barra de progreso</span>
+<span class="p">}</span>
+</code></pre>
+<p>Se inicializa en la declaración, no en <code>Awake</code>. La suscripción va en
+<code>OnNetworkSpawn</code> y se retira en <code>OnNetworkDespawn</code>.</p>
+</div></div><p>En el fogón, el servidor es el único que suma tiempo y cambia de estado. Los
+clientes no calculan nada: escuchan <code>OnValueChanged</code> y lanzan los mismos eventos
+que ya movían la barra y el sonido en un jugador. La parte visual del juego no
+se entera de que ahora hay red.</p>
+<figure class="figura"><iframe data-figura="reloj-maestro" data-base="../figuras/reloj-maestro/reloj-maestro" loading="lazy" title="Figura interactiva"></iframe></figure><p>Mueve el puntero para cambiar el valor del servidor. Luego pulsa para
+desenchufar el puesto de la derecha, cambia el valor, y vuelve a enchufarlo.</p>
+<h2>Cuál usar</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>RPC</th>
+<th>NetworkVariable</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Representa</td>
+<td>Un suceso: «ha pasado esto»</td>
+<td>Un estado: «esto vale tanto»</td>
+</tr>
+<tr>
+<td>Quien llega tarde</td>
+<td>No se entera</td>
+<td>Recibe el valor actual al entrar</td>
+</tr>
+<tr>
+<td>Si cambia varias veces en un tick</td>
+<td>Llega cada llamada</td>
+<td>Llega solo el último valor</td>
+</tr>
+<tr>
+<td>Uso típico</td>
+<td>Sonido, efecto, petición al servidor</td>
+<td>Vida, temporizador, estado de una máquina</td>
+</tr>
+</tbody>
+</table>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>La pregunta que decide es: <strong>si alguien se conecta ahora, ¿necesita saberlo?</strong></p>
+<p>Que sonó un claxon hace diez segundos, no. Que el fogón lleva la carne a medio
+hacer, sí. Lo primero es un RPC. Lo segundo, una NetworkVariable.</p>
+</div><div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>Una NetworkVariable no garantiza que veas todos los valores intermedios. Si el
+servidor la pone a 1, a 2 y a 3 dentro del mismo tick, los clientes solo reciben
+el 3. Para contar sucesos, eso pierde sucesos. Por eso los cortes de la tabla
+van con RPC.</p>
+</div><h2>Quién puede escribir</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Por defecto solo el servidor escribe en una NetworkVariable, y todos la leen. Es
+lo que quieres para el fogón.</p>
+<p>Pero hay datos que solo conoce un jugador. El giro de tu volante solo existe en
+tu teclado. Para eso se le puede dar el permiso de escritura al dueño del
+objeto.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>El constructor acepta los dos permisos:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">new</span><span class="w"> </span><span class="n">NetworkVariable</span><span class="o">&lt;</span><span class="kt">float</span><span class="o">&gt;</span><span class="p">(</span>
+<span class="w">    </span><span class="m">0f</span><span class="p">,</span>
+<span class="w">    </span><span class="n">NetworkVariableReadPermission</span><span class="p">.</span><span class="n">Everyone</span><span class="p">,</span>
+<span class="w">    </span><span class="n">NetworkVariableWritePermission</span><span class="p">.</span><span class="n">Owner</span><span class="p">);</span>
+</code></pre>
+<p>Con <code>WritePermission.Owner</code>, escribe el cliente dueño y el valor llega al resto
+a través del servidor. Una instancia sin permiso que asigne <code>.Value</code> provoca un
+error. El tipo <code>T</code> debe ser un tipo de valor serializable: primitivos,
+enumerados, vectores, o estructuras propias que implementen la serialización de
+Netcode.</p>
+</div></div><p>Esta es la solución que propone tu issue 16, y es el laboratorio.</p>
+<h2>Añadir ingredientes al plato</h2>
+<p>El capítulo corto del plato repite lo ya visto: el cliente pide añadir un
+ingrediente con un RPC que lleva la posición del ingrediente en la lista, y el
+servidor avisa a todos. No hay idea nueva; es el patrón de ida y vuelta aplicado
+una vez más.</p>
+<h2>Cuando dos jugadores chocan</h2>
+<p>El último capítulo es una decisión de diseño, y el autor la presenta así. Con
+autoridad del cliente, cada jugador mueve su personaje sin preguntar. ¿Qué pasa
+si dos quieren estar en el mismo sitio?</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Cada máquina es la que manda sobre su propio personaje, y del otro solo tiene
+una copia que va un poco por detrás. Cuando chocan, cada máquina resuelve el
+choque <strong>contra la copia retrasada</strong> del otro. Las dos resuelven algo
+ligeramente distinto.</p>
+<p>En la práctica funciona bastante bien a baja velocidad, y se nota más cuanto
+más rápido se mueven y peor es la conexión.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>En el vídeo el movimiento no usa física: comprueba con un <code>BoxCast</code> si puede
+avanzar. El autor añade a esa comprobación la capa de los demás jugadores, de
+modo que cada cliente trata las copias ajenas como obstáculos. No hay
+autoridad compartida: cada dueño se bloquea a sí mismo contra lo que ve.</p>
+<p>Con <code>Rigidbody</code>, Netcode ofrece <code>NetworkRigidbody</code>, que vuelve cinemáticos los
+cuerpos en las instancias sin autoridad para que la física solo se simule donde
+está la autoridad.</p>
+</div></div><p>El mismo capítulo arregla que los jugadores nazcan uno encima de otro: una lista
+de posiciones de salida, y cada jugador toma la suya según su orden de entrada.</p>
+<div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>Tu coche se mueve con <code>transform.Translate</code>, sin física, igual que el personaje
+del vídeo. El problema es el mismo, con una diferencia que lo agrava: un coche
+va mucho más rápido que un cocinero, así que la copia del otro está más lejos
+de donde está en realidad.</p>
+</div><div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>NetworkVariable</dt>
+<dd>Un valor replicado. Quien tiene permiso lo escribe y los demás lo reciben,
+incluido quien se conecta después.</dd>
+<dt>Permiso de escritura</dt>
+<dd>Quién puede cambiar el valor: el servidor, por defecto, o el dueño del objeto.</dd>
+<dt>Cuerpo cinemático</dt>
+<dd>Un <code>Rigidbody</code> que no responde a fuerzas. Lo mueve el código, no la física.</dd>
+</dl>
+</div><p>En el laboratorio cierras tu issue 16 con una NetworkVariable que escribe el
+dueño, y haces chocar dos coches para ver el problema del último capítulo.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/basics/networkvariable.html" target="_blank" rel="noopener">NetworkVariable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/learn/rpcvnetvar.html" target="_blank" rel="noopener">RPC vs NetworkVariable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/physics.html" target="_blank" rel="noopener">Physics</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/terms-concepts/ownership.html" target="_blank" rel="noopener">Ownership</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M03/02-trafico-en-red.html">
+      <span class="direccion">← Anterior</span>
+      Tráfico en red
+    </a>
+    <a class="siguiente" href="../M04/02-el-volante-y-los-choques.html">
+      <span class="direccion">Siguiente →</span>
+      El volante y los choques
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RPC y lógica de servidor · Multijugador en Unity</title>
+  <link rel="stylesheet" href="../estilos/design-system.css">
+  <link rel="stylesheet" href="../estilos/pygments.css">
+  <script>
+    // Se aplica antes de pintar para que no haya destello de tema equivocado.
+    (function () {
+      var t = localStorage.getItem('tema');
+      if (t) document.documentElement.setAttribute('data-theme', t);
+    })();
+  </script>
+</head>
+<body>
+
+<header class="barra">
+  <a class="barra-marca" href="../index.html">unity<span>/</span>multijugador</a>
+  <span class="barra-sep"></span>
+  <button class="barra-boton" id="tema" title="Cambiar tema" aria-label="Cambiar tema">◐</button>
+</header>
+
+<main class="hoja">
+
+  <div class="leccion-eyebrow">
+    <span>Módulo 2 · RPC y lógica de servidor · Lección 1</span>
+    <span class="progreso">
+      <i class="actual"></i>
+      <i class=""></i>
+    </span>
+    <span class="barra-sep"></span>
+    <span class="pildora pildora-tipo">concepto</span>
+    <span class="pildora pildora-duracion">~25 min</span>
+  </div>
+
+  <h1 class="leccion-titulo">RPC y lógica de servidor</h1>
+  <p class="leccion-resumen">Cómo se le dice algo a otra máquina, y cómo se consigue que un trozo de código corra en una sola. Las dos herramientas con las que el vídeo sincroniza casi todo el juego.</p>
+
+  <section class="tarjeta objetivos">
+    <p class="tarjeta-titulo">Al terminar sabrás</p>
+    <ul>
+      <li>Distinguir el código que debe correr en todas las máquinas del que debe correr solo en el servidor</li>
+      <li>Escribir un RPC hacia el servidor y otro del servidor hacia todos, con la sintaxis de tu versión</li>
+      <li>Explicar por qué no se puede enviar un ScriptableObject por la red y qué se envía en su lugar</li>
+      <li>Reconocer el problema del singleton del jugador y su arreglo</li>
+    </ul>
+  </section>
+
+  <section class="tarjeta video" id="video" data-id="7glCsF9fv3s">
+    <p class="tarjeta-titulo">En el vídeo</p>
+    <div class="video-marco">
+      <button class="video-caratula" type="button" aria-label="Reproducir el capítulo">
+<img src="../M02/01-rpc-y-logica-de-servidor.svg" alt="">        <span class="video-play" aria-hidden="true"></span>
+        <span class="video-rotulo"></span>
+      </button>
+    </div>
+    <ol class="video-capitulos">
+      <li>
+        <button type="button" data-inicio="3551" data-fin="4452"
+                data-rango="00:59:11 – 01:14:12">
+          <span class="video-capitulo-titulo">Sync Delivery Manager</span>
+          <span class="video-tramo">00:59:11 – 01:14:12</span>
+        </button>
+      </li>
+      <li>
+        <button type="button" data-inicio="4452" data-fin="4820"
+                data-rango="01:14:12 – 01:20:20">
+          <span class="video-capitulo-titulo">Fix Selected Counter Visual</span>
+          <span class="video-tramo">01:14:12 – 01:20:20</span>
+        </button>
+      </li>
+    </ol>
+    <p class="video-aviso" hidden>
+      Para reproducir el vídeo aquí dentro, abre el curso con
+      <code>abrir.bat</code>. Abierto como fichero suelto, YouTube rechaza el
+      reproductor.
+    </p>
+  </section>
+
+  <script>
+    (function () {
+      var caja = document.getElementById('video');
+      var id = caja.dataset.id;
+      var marco = caja.querySelector('.video-marco');
+      var caratula = caja.querySelector('.video-caratula');
+      var rotulo = caja.querySelector('.video-rotulo');
+      var botones = caja.querySelectorAll('.video-capitulos button');
+      // YouTube rechaza el reproductor incrustado en paginas file://, que no
+      // envian origen (error 153). En ese caso no se carga y se avisa.
+      var incrustable = location.protocol === 'http:' || location.protocol === 'https:';
+      var aviso = caja.querySelector('.video-aviso');
+      var elegido = botones[0];
+
+      function marcar(boton) {
+        elegido = boton;
+        botones.forEach(function (b) { b.classList.toggle('actual', b === boton); });
+        rotulo.textContent = boton.querySelector('.video-capitulo-titulo').textContent
+          + ' · ' + boton.dataset.rango;
+      }
+
+      function reproducir(boton) {
+        marcar(boton);
+        if (!incrustable) {
+          aviso.hidden = false;
+          aviso.classList.add('resaltado');
+          return;
+        }
+        var f = document.createElement('iframe');
+        f.src = 'https://www.youtube-nocookie.com/embed/' + id
+          + '?start=' + boton.dataset.inicio + '&end=' + boton.dataset.fin + '&autoplay=1&rel=0';
+        f.title = rotulo.textContent;
+        f.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+        f.allowFullscreen = true;
+        f.referrerPolicy = 'strict-origin-when-cross-origin';
+        marco.replaceChildren(f);
+      }
+
+      marcar(elegido);
+      caratula.addEventListener('click', function () { reproducir(elegido); });
+      botones.forEach(function (b) {
+        b.addEventListener('click', function () { reproducir(b); });
+      });
+    })();
+  </script>
+
+
+  <p>El <code>DeliveryManager</code> de <em>Kitchen Chaos</em> es el script que genera los pedidos y
+comprueba si lo que entregas coincide con alguno. En un jugador es trivial. En
+red plantea las dos preguntas de esta lección.</p>
+<h2>El problema: cada máquina genera sus propios pedidos</h2>
+<p>El <code>DeliveryManager</code> tiene un temporizador y, cuando vence, elige una receta <strong>al
+azar</strong>. Ese código corre en todas las máquinas, así que cada una elige una
+receta distinta. Dos jugadores en la misma cocina ven listas de pedidos
+diferentes.</p>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Lo aleatorio, lo que crea cosas y lo que decide quién gana tiene que pasar en
+<strong>un solo sitio</strong>. Si pasa en todos, cada máquina vive una partida distinta.</p>
+<p>Ese sitio es el servidor. Él decide y luego avisa a los demás de lo que ha
+decidido.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>La lógica autoritativa se protege con una guarda al principio del método:</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="n">IsServer</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
+</code></pre>
+<p>Lo que queda después solo se ejecuta en la instancia del servidor. El resultado
+se propaga a los clientes con un RPC o con una <code>NetworkVariable</code>.</p>
+</div></div><h2>RPC: ejecutar un método en otra máquina</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Un RPC es una llamada a un método que no se ejecuta donde la escribes, sino en
+otra máquina. Tú llamas a <code>Tocar()</code> aquí y <code>Tocar()</code> se ejecuta allí.</p>
+<p>Hay dos direcciones que se usan a todas horas:</p>
+<ul>
+<li><strong>Hacia el servidor</strong>: «quiero hacer esto». Lo usa un cliente para pedir algo.</li>
+<li><strong>Del servidor hacia todos</strong>: «ha pasado esto». Lo usa el servidor para avisar.</li>
+</ul>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Un RPC es un método de un <code>NetworkBehaviour</code> marcado con el atributo <code>[Rpc]</code>,
+que recibe como argumento a quién se envía. Netcode genera el código que
+serializa los parámetros, los envía y los invoca en el destino sobre la copia
+del mismo objeto.</p>
+<pre class="codigo"><code class="lenguaje-csharp"><span class="na">[Rpc(SendTo.Server)]</span>
+<span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">PedirEntregaRpc</span><span class="p">(</span><span class="kt">int</span><span class="w"> </span><span class="n">indiceReceta</span><span class="p">)</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* corre en el servidor */</span><span class="w"> </span><span class="p">}</span>
+
+<span class="na">[Rpc(SendTo.ClientsAndHost)]</span>
+<span class="k">private</span><span class="w"> </span><span class="k">void</span><span class="w"> </span><span class="nf">EntregaCorrectaRpc</span><span class="p">()</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="cm">/* corre en todas las máquinas con jugador */</span><span class="w"> </span><span class="p">}</span>
+</code></pre>
+<p>El nombre del método tiene que terminar en <code>Rpc</code>: el compilador de Netcode da
+error si no.</p>
+</div></div><div class="aviso aviso-hoy"><span class="aviso-etiqueta">Del vídeo a hoy</span><p>El vídeo usa dos atributos distintos, <code>[ServerRpc]</code> y <code>[ClientRpc]</code>, con nombres
+terminados en <code>ServerRpc</code> y <code>ClientRpc</code>. Siguen existiendo en tu versión, pero
+hay uno solo que los cubre a los dos y a más destinos:</p>
+<table>
+<thead>
+<tr>
+<th>En el vídeo</th>
+<th>En tu versión</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>[ServerRpc]</code></td>
+<td><code>[Rpc(SendTo.Server)]</code></td>
+</tr>
+<tr>
+<td><code>[ClientRpc]</code></td>
+<td><code>[Rpc(SendTo.ClientsAndHost)]</code></td>
+</tr>
+<tr>
+<td><code>[ServerRpc(RequireOwnership = false)]</code></td>
+<td><code>[Rpc(SendTo.Server)]</code>, sin más</td>
+</tr>
+</tbody>
+</table>
+<p>La tercera fila importa. Un <code>[ServerRpc]</code> antiguo solo lo puede invocar el dueño
+del objeto, y por eso el autor escribe <code>RequireOwnership = false</code> cada vez que
+un jugador llama a un objeto que no es suyo. El <code>[Rpc]</code> nuevo lo puede invocar
+cualquiera por defecto. Para restringirlo se usa
+<code>InvokePermission = RpcInvokePermission.Owner</code>. <code>RequireOwnership</code> está marcado
+como obsoleto.</p>
+</div><p>Los destinos que más vas a usar:</p>
+<table>
+<thead>
+<tr>
+<th>Destino</th>
+<th>Dónde se ejecuta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SendTo.Server</code></td>
+<td>Solo en el servidor</td>
+</tr>
+<tr>
+<td><code>SendTo.ClientsAndHost</code></td>
+<td>En todas las máquinas con jugador</td>
+</tr>
+<tr>
+<td><code>SendTo.Everyone</code></td>
+<td>En todas, incluido un servidor dedicado</td>
+</tr>
+<tr>
+<td><code>SendTo.NotOwner</code></td>
+<td>En todas menos la del dueño del objeto</td>
+</tr>
+<tr>
+<td><code>SendTo.Owner</code></td>
+<td>Solo en la del dueño</td>
+</tr>
+</tbody>
+</table>
+<h2>El patrón de ida y vuelta</h2>
+<p>Entregar un plato en el vídeo queda así, y el mismo dibujo se repite en casi
+todos los mostradores:</p>
+<pre class="codigo"><code class="lenguaje-text">  CLIENTE                    SERVIDOR                     TODOS
+  ───────                    ────────                     ─────
+  pulsa «entregar»
+        │
+        └── RPC al servidor ──▶ comprueba la receta
+                                 decide: correcta
+                                      │
+                                      └── RPC a todos ──▶ quitan el pedido
+                                                          de la lista y
+                                                          suena el acierto
+</code></pre>
+<figure class="figura"><iframe data-figura="el-aviso" data-base="../figuras/el-aviso/el-aviso" loading="lazy" title="Figura interactiva"></iframe></figure><p>Pulsa en uno de los dos puestos. La cápsula no va de un puesto al otro: sube a
+la caja, y de la caja baja a los dos.</p>
+<div class="aviso aviso-clave"><span class="aviso-etiqueta">Lo que importa</span><p>El cliente no cambia nada por su cuenta: <strong>pide</strong>. El servidor decide y
+<strong>avisa</strong>. Lo que cambia la partida ocurre en el aviso, que se ejecuta en todas
+las máquinas a la vez, incluida la del que pidió.</p>
+</div><h2>Lo que no cabe en un RPC</h2>
+<div class="par"><div class="exp exp-natural"><span class="exp-etiqueta">En lenguaje natural</span><p>Un RPC viaja por un cable. Solo puedes meter datos: números, textos cortos,
+vectores. No puedes meter «esa receta de ahí», porque esa receta es un objeto
+que vive en la memoria de tu máquina y en la otra no significa nada.</p>
+</div><div class="exp exp-tecnico"><span class="exp-etiqueta">En lenguaje tecnico</span><p>Los parámetros de un RPC deben ser serializables por Netcode: primitivos,
+enumerados, tipos de Unity como <code>Vector3</code>, estructuras que implementen
+<code>INetworkSerializable</code> y referencias de red como <code>NetworkObjectReference</code>. Una
+referencia a un <code>ScriptableObject</code> o a un <code>MonoBehaviour</code> no lo es.</p>
+</div></div><p>El autor se topa con esto al enviar la receta elegida. Su solución es la
+estándar: todas las máquinas tienen la misma lista de recetas en el mismo orden,
+así que el servidor envía <strong>la posición en la lista</strong>, un <code>int</code>, y cada cliente
+busca la receta en su copia.</p>
+<div class="aviso aviso-ojo"><span class="aviso-etiqueta">Ojo con esto</span><p>Un RPC es un aviso de un instante. Quien se conecta después no lo recibe. Si un
+jugador entra con la partida empezada, no sabrá qué pedidos hay, porque los
+avisos de esos pedidos ya pasaron. El autor lo deja pendiente a propósito y
+vuelve a ello en el módulo 6.</p>
+</div><h2>El jugador ya no es único</h2>
+<p>El segundo capítulo arregla algo que rompe en cuanto hay dos jugadores. El juego
+resaltaba el mostrador que el jugador tiene delante usando <code>Player.Instance</code>, un
+singleton. Con dos jugadores no hay «el» jugador.</p>
+<p>El arreglo tiene dos partes:</p>
+<ol>
+<li>El singleton pasa a ser <code>LocalInstance</code>, y solo lo asigna la copia que es
+dueña, dentro de <code>OnNetworkSpawn</code>.</li>
+<li>Como el jugador aparece más tarde que la escena, los mostradores no pueden
+suscribirse a él en su <code>Start</code>. El jugador lanza un evento estático al
+aparecer, y quien lo necesite se engancha entonces.</li>
+</ol>
+<p>Tú resolviste el mismo problema con la cámara, por el otro lado: en vez de que
+la cámara espere un evento, el coche propio la busca al aparecer con
+<code>FindFirstObjectByType</code> y se le presenta. Las dos formas responden a lo mismo:
+el objeto de la escena y el del jugador no nacen a la vez.</p>
+<div class="tarjeta vocabulario"><span class="tarjeta-titulo">Vocabulario</span><dl>
+<dt>RPC</dt>
+<dd>Llamada a un método que se ejecuta en otra máquina. Es un aviso puntual.</dd>
+<dt>Lógica de servidor</dt>
+<dd>Código que solo debe ejecutarse en la instancia del servidor, protegido con
+<code>if (!IsServer) return;</code>.</dd>
+<dt>Serializar</dt>
+<dd>Convertir un dato en bytes para enviarlo, y reconstruirlo al llegar.</dd>
+</dl>
+</div><p>En el laboratorio escribes tu primer RPC, un claxon, y pones el tráfico bajo la
+guarda del servidor para ver qué pasa cuando solo él decide.</p>
+
+
+
+  <hr>
+  <section class="tarjeta fuentes">
+    <p class="tarjeta-titulo">Fuentes</p>
+    <ol>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc.html" target="_blank" rel="noopener">RPC</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/message-system/rpc-params.html" target="_blank" rel="noopener">RPC params</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/learn/rpcvnetvar.html" target="_blank" rel="noopener">RPC vs NetworkVariable</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+      <li>
+        <a href="https://docs.unity3d.com/Packages/com.unity.netcode.gameobjects@2.13/manual/advanced-topics/serialization/serialization-overview.html" target="_blank" rel="noopener">Serialization</a>
+        <span class="fuente-tipo ">oficial</span>
+      </li>
+    </ol>
+  </section>
+
+  <nav class="nav-leccion">
+    <a href="../M01/02-quien-mueve-el-coche.html">
+      <span class="direccion">← Anterior</span>
+      Quién mueve el coche
+    </a>
+    <a class="siguiente" href="../M02/02-el-claxon-y-el-trafico.html">
+      <span class="direccion">Siguiente →</span>
+      El claxon y el tráfico
+    </a>
+  </nav>
+
+</main>
+
+<script>
+  // --- Interruptor de tema ---------------------------------------------
+  document.getElementById('tema').addEventListener('click', function () {
+    var raiz = document.documentElement;
+    var actual = raiz.getAttribute('data-theme');
+    if (!actual) {
+      actual = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    var nuevo = actual === 'dark' ? 'light' : 'dark';
+    raiz.setAttribute('data-theme', nuevo);
+    localStorage.setItem('tema', nuevo);
+    pintarFiguras();
+  });
+
+  // --- Figuras ----------------------------------------------------------
+  // Cada figura tiene una pagina por tema. Se elige al cargar y al cambiar
+  // de tema, y la propia figura avisa de su alto para que no haga scroll.
+  function pintarFiguras() {
+    var tema = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.querySelectorAll('iframe[data-figura]').forEach(function (f) {
+      var src = f.dataset.base + (tema === 'light' ? '-light' : '') + '.html';
+      if (f.getAttribute('src') !== src) f.setAttribute('src', src);
+    });
+  }
+  pintarFiguras();
+  window.addEventListener('message', function (e) {
+    if (!e.data || !e.data.figura || !e.data.alto) return;
+    document.querySelectorAll('iframe[data-figura="' + e.data.figura + '"]').forEach(function (f) {
+      if (f.contentWindow === e.source) f.style.height = e.data.alto + 'px';
+    });
+  });
+
+  // --- Botón de copiar --------------------------------------------------
+  // Se excluyen los bloques de salida esperada: eso no se copia, se compara.
+  document.querySelectorAll('pre.codigo').forEach(function (pre) {
+    if (pre.closest('.esperado')) return;
+    var b = document.createElement('button');
+    b.className = 'copiar';
+    b.type = 'button';
+    b.textContent = 'copiar';
+    b.addEventListener('click', function () {
+      navigator.clipboard.writeText(pre.querySelector('code').innerText).then(function () {
+        b.textContent = 'copiado';
+        b.classList.add('ok');
+        setTimeout(function () { b.textContent = 'copiar'; b.classList.remove('ok'); }, 1600);
+      });
+    });
+    pre.appendChild(b);
+  });
+
+  // --- Progreso de los laboratorios -------------------------------------
+  // Se guarda por página y por posición de la casilla.
+  (function () {
+    var casillas = document.querySelectorAll('.task-list-item-checkbox');
+    if (!casillas.length) return;
+    var clave = 'progreso:' + location.pathname;
+    var estado = JSON.parse(localStorage.getItem(clave) || '{}');
+    casillas.forEach(function (c, i) {
+      c.disabled = false;
+      if (estado[i]) {
+        c.checked = true;
+        c.closest('li').classList.add('hecho');
+      }
+      c.addEventListener('change', function () {
+        estado[i] = c.checked;
+        c.closest('li').classList.toggle('hecho', c.checked);
+        localStorage.setItem(clave, JSON.stringify(estado));
+      });
+    });
+  })();
+</script>
+
+</body>
+</html>
