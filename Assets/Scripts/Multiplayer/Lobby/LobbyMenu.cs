@@ -78,7 +78,8 @@ namespace Multiplayer.Lobby
         private void OnGUI()
         {
             GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
-            GUILayout.BeginArea(new Rect(10, 10, 300, 400), GUI.skin.box);
+            GUILayout.BeginArea(new Rect(10, 10, 300, Screen.height / scale - 20));
+            GUILayout.BeginVertical(GUI.skin.box);
 
             if (_lobby == null)
                 GUILayout.Label(MultiplayerBootstrap.StartupError ?? "No hay MultiplayerBootstrap en la escena");
@@ -89,6 +90,7 @@ namespace Multiplayer.Lobby
 
             if (!string.IsNullOrEmpty(_status)) GUILayout.Label(_status);
 
+            GUILayout.EndVertical();
             GUILayout.EndArea();
         }
 
@@ -110,7 +112,9 @@ namespace Multiplayer.Lobby
 
         private void DrawInside(LobbyInfo lobby)
         {
-            GUILayout.Label($"{(lobby.IsHost ? "Host" : "Cliente")} · {lobby.Members.Count}/{lobby.MaxPlayers}");
+            // MaxPlayers 0 = el proveedor no lo sabe (el cliente local no recibe el cupo)
+            string capacity = lobby.MaxPlayers > 0 ? $"/{lobby.MaxPlayers}" : "";
+            GUILayout.Label($"{(lobby.IsHost ? "Host" : "Cliente")} · {lobby.Members.Count}{capacity}");
             GUILayout.Label($"Id: {lobby.Id}");
 
             foreach (string member in lobby.Members)
